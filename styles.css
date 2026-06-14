@@ -172,6 +172,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-width: 0;
 }
 
 /* Header Styling */
@@ -223,6 +224,7 @@ body {
 .content-body {
   padding: 32px;
   flex: 1;
+  min-width: 0;
 }
 
 /* Tab Content Visibility */
@@ -436,10 +438,11 @@ body {
 
 .table-responsive {
   width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: auto;
-  scrollbar-color: rgba(255, 255, 255, 0.3) var(--bg-secondary);
+  scrollbar-color: var(--accent-green) var(--bg-input);
 }
 
 .table-responsive table {
@@ -461,21 +464,23 @@ body {
 }
 
 .table-responsive th:first-child {
-  background-color: #171f1b !important;
+  background-color: var(--bg-card) !important;
   z-index: 11;
 }
 
 /* Custom Scrollbar for Responsive Tables */
 .table-responsive::-webkit-scrollbar {
-  height: 10px;
+  height: 12px;
 }
 .table-responsive::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
 }
 .table-responsive::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-sm);
-  border: 2px solid var(--bg-secondary);
+  border: 2px solid var(--bg-input);
 }
 .table-responsive::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent-green);
@@ -483,7 +488,8 @@ body {
 
 table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
 }
 
@@ -494,7 +500,7 @@ th, td {
 }
 
 th {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: var(--bg-card);
   color: var(--text-secondary);
   font-weight: 500;
   text-transform: uppercase;
@@ -503,7 +509,11 @@ th {
 }
 
 tbody tr:hover {
-  background-color: rgba(255, 255, 255, 0.01);
+  background-color: var(--bg-input);
+}
+
+tbody tr:hover td:first-child {
+  background-color: var(--bg-input) !important;
 }
 
 tbody tr:last-child td {
