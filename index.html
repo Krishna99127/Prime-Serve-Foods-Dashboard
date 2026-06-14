@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- CSS Stylesheet link (Cache Busted v4) -->
-  <link rel="stylesheet" href="styles.css?v=4.1">
+  <!-- CSS Stylesheet link (Cache Busted v5) -->
+  <link rel="stylesheet" href="styles.css?v=5.0">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Lucide Icons CDN -->
@@ -931,10 +931,11 @@
   <div class="modal" id="modal-purchase">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3>Log Purchase (Inward Inventory)</h3>
+        <h3 id="modal-purchase-title">Log Purchase (Inward Inventory)</h3>
         <button class="modal-close" onclick="closeModal('modal-purchase')">&times;</button>
       </div>
       <form id="form-purchase">
+        <input type="hidden" id="pur-form-id" value="">
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group col-4">
@@ -1055,10 +1056,11 @@
   <div class="modal" id="modal-sale">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3>Log Customer Sale (Outward Inventory)</h3>
+        <h3 id="modal-sale-title">Log Customer Sale (Outward Inventory)</h3>
         <button class="modal-close" onclick="closeModal('modal-sale')">&times;</button>
       </div>
       <form id="form-sale">
+        <input type="hidden" id="sale-form-id" value="">
         <div class="modal-body">
           <div class="form-row">
             <div class="form-group col-4">
@@ -1242,7 +1244,7 @@
     </div>
   </div>
 
-  <!-- Javascript File link (Cache Busted v4) -->
-  <script src="app.js?v=4.1"></script>
+  <!-- Javascript File link (Cache Busted v5) -->
+  <script src="app.js?v=5.0"></script>
 </body>
 </html>

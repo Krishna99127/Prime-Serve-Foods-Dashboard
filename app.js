@@ -84,6 +84,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (logPurBtn) {
     logPurBtn.addEventListener("click", () => {
       openModal("modal-purchase");
+      document.getElementById("pur-form-id").value = "";
+      document.getElementById("modal-purchase-title").textContent = "Log Purchase (Inward Inventory)";
       document.getElementById("pur-form-date").value = new Date().toISOString().substring(0,10);
       document.getElementById("form-purchase").reset();
       document.getElementById("pur-gst-info").classList.add("hidden");
@@ -99,6 +101,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (logSalBtn) {
     logSalBtn.addEventListener("click", () => {
       openModal("modal-sale");
+      document.getElementById("sale-form-id").value = "";
+      document.getElementById("modal-sale-title").textContent = "Log Customer Sale (Outward Inventory)";
       document.getElementById("sale-form-date").value = new Date().toISOString().substring(0,10);
       document.getElementById("form-sale").reset();
       document.getElementById("sale-gst-info").classList.add("hidden");
@@ -411,9 +415,11 @@ function renderPurchasesTable() {
     if (filterVendor !== "all" && p.vendor !== filterVendor) return;
     
     const badgeClass = p.payment_status === "Clear" ? "badge-paid" : "badge-pending";
-    const actionButton = p.payment_status === "Pending" 
+    const payButton = p.payment_status === "Pending" 
       ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('Vendor Payment', '${p.vendor}', ${p.total}, '${p.id}')">Clear Dues</button>`
       : `<button class="btn btn-sm btn-outline" disabled>Settled</button>`;
+    const editButton = `<button class="btn btn-sm btn-outline" onclick="editPurchase('${p.id}')">Edit</button>`;
+    const actionCell = `<div style="display: flex; gap: 6px;">${payButton}${editButton}</div>`;
       
     const taxable = p.taxable_value !== undefined ? p.taxable_value : (p.quantity * p.rate);
     const gstRateVal = p.gst_rate !== undefined ? `${p.gst_rate}%` : '-';
@@ -435,7 +441,7 @@ function renderPurchasesTable() {
       <td>${gstRateVal}</td>
       <td class="font-weight-bold">₹${p.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td><span class="badge ${badgeClass}">${p.payment_status}</span></td>
-      <td>${actionButton}</td>
+      <td>${actionCell}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -458,9 +464,11 @@ function renderSalesTable() {
     const isLoss = profit < 0;
     
     const badgeClass = s.payment_status === "Clear" ? "badge-paid" : "badge-pending";
-    const actionButton = s.payment_status === "Pending"
+    const payButton = s.payment_status === "Pending"
       ? `<button class="btn btn-sm btn-primary" onclick="openPaymentModal('Customer Receipt', '${s.customer}', ${s.total}, '${s.id}')">Collect</button>`
       : `<button class="btn btn-sm btn-outline" disabled>Settled</button>`;
+    const editButton = `<button class="btn btn-sm btn-outline" onclick="editSale('${s.id}')">Edit</button>`;
+    const actionCell = `<div style="display: flex; gap: 6px;">${payButton}${editButton}</div>`;
       
     const taxable = s.taxable_value !== undefined ? s.taxable_value : (s.quantity * s.rate);
     const gstRateVal = s.gst_rate !== undefined ? `${s.gst_rate}%` : '-';
@@ -484,7 +492,7 @@ function renderSalesTable() {
       <td class="font-weight-bold">₹${s.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td class="${isLoss ? 'color-orange' : 'color-green'}">₹${profit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td><span class="badge ${badgeClass}">${s.payment_status}</span></td>
-      <td>${actionButton}</td>
+      <td>${actionCell}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -1120,11 +1128,25 @@ function closeModal(modalId) {
 function openModalFromQuick(type) {
   closeModal('modal-quick-transaction');
   if (type === 'sale') {
-    openModal('modal-sale');
-    document.getElementById("sale-form-date").value = new Date().toISOString().substring(0,10);
+    const btn = document.getElementById("log-sale-btn");
+    if (btn) btn.click();
+    else {
+      openModal('modal-sale');
+      document.getElementById("sale-form-id").value = "";
+      document.getElementById("modal-sale-title").textContent = "Log Customer Sale (Outward Inventory)";
+      document.getElementById("sale-form-date").value = new Date().toISOString().substring(0,10);
+      document.getElementById("form-sale").reset();
+    }
   } else if (type === 'purchase') {
-    openModal('modal-purchase');
-    document.getElementById("pur-form-date").value = new Date().toISOString().substring(0,10);
+    const btn = document.getElementById("log-purchase-btn");
+    if (btn) btn.click();
+    else {
+      openModal('modal-purchase');
+      document.getElementById("pur-form-id").value = "";
+      document.getElementById("modal-purchase-title").textContent = "Log Purchase (Inward Inventory)";
+      document.getElementById("pur-form-date").value = new Date().toISOString().substring(0,10);
+      document.getElementById("form-purchase").reset();
+    }
   } else if (type === 'payment') {
     openModal('modal-payment');
     document.getElementById("pmt-form-date").value = new Date().toISOString().substring(0,10);
@@ -1433,6 +1455,7 @@ function setupFormHandlers() {
   
   document.getElementById("form-purchase").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const id = document.getElementById("pur-form-id").value;
     const date = document.getElementById("pur-form-date").value;
     const vendor = document.getElementById("pur-form-vendor").value;
     const product = document.getElementById("pur-form-product").value;
@@ -1459,7 +1482,7 @@ function setupFormHandlers() {
     const gstBillingVal = gstTreatment === "without" ? "Without GST" : "With GST";
     
     const purchaseData = {
-      id: "PUR-NEW-" + String(state.purchases.length + 1).padStart(3, '0'),
+      id: id || "PUR-NEW-" + String(state.purchases.length + 1).padStart(3, '0'),
       date,
       vendor,
       product,
@@ -1475,7 +1498,15 @@ function setupFormHandlers() {
       gst_billing: gstBillingVal
     };
     
-    state.purchases.push(purchaseData);
+    if (id) {
+      const idx = state.purchases.findIndex(p => p.id === id);
+      if (idx !== -1) {
+        state.purchases[idx] = purchaseData;
+      }
+    } else {
+      state.purchases.push(purchaseData);
+    }
+    
     saveStateLocal();
     closeModal("modal-purchase");
     
@@ -1598,6 +1629,7 @@ function setupFormHandlers() {
   
   document.getElementById("form-sale").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const id = document.getElementById("sale-form-id").value;
     const date = document.getElementById("sale-form-date").value;
     const customer = document.getElementById("sale-form-cust").value;
     const product = document.getElementById("sale-form-product").value;
@@ -1625,7 +1657,7 @@ function setupFormHandlers() {
     const gstBillingVal = gstTreatment === "without" ? "Without GST" : "With GST";
     
     const saleData = {
-      id: "SLS-NEW-" + String(state.sales.length + 1).padStart(3, '0'),
+      id: id || "SLS-NEW-" + String(state.sales.length + 1).padStart(3, '0'),
       date,
       customer,
       product,
@@ -1643,7 +1675,15 @@ function setupFormHandlers() {
       gst_billing: gstBillingVal
     };
     
-    state.sales.push(saleData);
+    if (id) {
+      const idx = state.sales.findIndex(s => s.id === id);
+      if (idx !== -1) {
+        state.sales[idx] = saleData;
+      }
+    } else {
+      state.sales.push(saleData);
+    }
+    
     saveStateLocal();
     closeModal("modal-sale");
     
@@ -1836,6 +1876,91 @@ function editCustomer(customerId) {
   document.getElementById("cst-form-phone").value = c.phone || "";
   document.getElementById("cst-form-email").value = c.email || "";
   document.getElementById("cst-form-address").value = c.address || "";
+}
+
+function editPurchase(purchaseId) {
+  const p = state.purchases.find(pur => pur.id === purchaseId);
+  if (!p) return;
+  
+  openModal("modal-purchase");
+  document.getElementById("modal-purchase-title").textContent = "Edit Purchase Details";
+  document.getElementById("pur-form-id").value = p.id;
+  document.getElementById("pur-form-date").value = p.date;
+  document.getElementById("pur-form-vendor").value = p.vendor;
+  document.getElementById("pur-form-gst-treatment").value = p.gst_billing === "Without GST" ? "without" : "with";
+  document.getElementById("pur-form-product").value = p.product;
+  document.getElementById("pur-form-qty").value = p.quantity;
+  document.getElementById("pur-form-rate").value = p.rate;
+  
+  const prod = state.products.find(prod => prod.name === p.product);
+  document.getElementById("pur-form-hsn").value = prod ? (prod.hsn || "") : "";
+  document.getElementById("pur-form-gst-rate").value = p.gst_rate !== undefined ? p.gst_rate : "18";
+  document.getElementById("pur-form-status").value = p.payment_status;
+  
+  const v = state.vendors.find(vend => vend.name === p.vendor);
+  const infoBox = document.getElementById("pur-gst-info");
+  if (v) {
+    infoBox.classList.remove("hidden");
+    document.getElementById("pur-vendor-gstin-display").textContent = v.gstin || "-";
+    document.getElementById("pur-vendor-state-display").textContent = v.state || "Telangana";
+    
+    const isLocal = (v.state || "Telangana").toLowerCase() === "telangana";
+    const badge = document.getElementById("pur-tax-type-badge");
+    if (isLocal) {
+      badge.textContent = "Local (CGST + SGST)";
+      badge.className = "badge badge-paid";
+    } else {
+      badge.textContent = "Interstate (IGST)";
+      badge.className = "badge badge-pending";
+    }
+  } else {
+    infoBox.classList.add("hidden");
+  }
+  
+  updatePurchaseTotal();
+}
+
+function editSale(saleId) {
+  const s = state.sales.find(sal => sal.id === saleId);
+  if (!s) return;
+  
+  openModal("modal-sale");
+  document.getElementById("modal-sale-title").textContent = "Edit Sale Details";
+  document.getElementById("sale-form-id").value = s.id;
+  document.getElementById("sale-form-date").value = s.date;
+  document.getElementById("sale-form-cust").value = s.customer;
+  document.getElementById("sale-form-gst-treatment").value = s.gst_billing === "Without GST" ? "without" : "with";
+  document.getElementById("sale-form-product").value = s.product;
+  document.getElementById("sale-form-qty").value = s.quantity;
+  document.getElementById("sale-form-costrate").value = s.cost_rate;
+  document.getElementById("sale-form-sellrate").value = s.rate;
+  
+  const prod = state.products.find(prod => prod.name === s.product);
+  document.getElementById("sale-form-hsn").value = prod ? (prod.hsn || "") : "";
+  document.getElementById("sale-form-gst-rate").value = s.gst_rate !== undefined ? s.gst_rate : "18";
+  document.getElementById("sale-form-status").value = s.payment_status;
+  
+  const c = state.customers.find(cust => cust.name === s.customer);
+  const infoBox = document.getElementById("sale-gst-info");
+  if (c) {
+    infoBox.classList.remove("hidden");
+    document.getElementById("sale-customer-gstin-display").textContent = c.gstin || "-";
+    document.getElementById("sale-customer-state-display").textContent = c.state || "Telangana";
+    
+    const isLocal = (c.state || "Telangana").toLowerCase() === "telangana";
+    const badge = document.getElementById("sale-tax-type-badge");
+    if (isLocal) {
+      badge.textContent = "Local (CGST + SGST)";
+      badge.className = "badge badge-paid";
+    } else {
+      badge.textContent = "Interstate (IGST)";
+      badge.className = "badge badge-pending";
+    }
+  } else {
+    infoBox.classList.add("hidden");
+  }
+  
+  updateSaleTotal();
 }
 
 // ================= GOOGLE SHEETS HTTP SYNC ENGINE =================
