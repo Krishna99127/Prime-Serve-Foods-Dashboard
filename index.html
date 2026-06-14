@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prime Serve Foods — B2B wholesale Dashboard</title>
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheet link -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- App Container -->
+  <div class="app-container">
+    
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="logo-box">
+          <span class="logo-icon">🏪</span>
+        </div>
+        <div class="brand-text">
+          <h2>Prime Serve</h2>
+          <p>Foods Dashboard</p>
+        </div>
+      </div>
+      
+      <nav class="sidebar-menu">
+        <a href="#" class="menu-item active" data-tab="dashboard">
+          <i data-lucide="layout-dashboard"></i> <span>Overview</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="products">
+          <i data-lucide="package"></i> <span>Products</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="vendors">
+          <i data-lucide="truck"></i> <span>Vendors</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="customers">
+          <i data-lucide="users"></i> <span>Customers</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="purchases">
+          <i data-lucide="shopping-cart"></i> <span>Purchases</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="sales">
+          <i data-lucide="trending-up"></i> <span>Sales</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="payments">
+          <i data-lucide="credit-card"></i> <span>Payments</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="custledgers">
+          <i data-lucide="users"></i> <span>Customer Ledgers</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="vendledgers">
+          <i data-lucide="truck"></i> <span>Vendor Ledgers</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="cashbookledger">
+          <i data-lucide="book-open"></i> <span>Cash Book & GL</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="balancesheet">
+          <i data-lucide="scale"></i> <span>Balance Sheet</span>
+        </a>
+        <a href="#" class="menu-item" data-tab="settings">
+          <i data-lucide="settings"></i> <span>Sync Settings</span>
+        </a>
+      </nav>
+      
+      <div class="sidebar-status">
+        <div class="status-indicator offline" id="connection-status-dot"></div>
+        <span id="connection-status-text">Local Demo Mode</span>
+      </div>
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Top Header -->
+      <header class="header">
+        <div class="header-search">
+          <h1 id="page-title">Dashboard Overview</h1>
+        </div>
+        <div class="header-actions">
+          <div class="date-badge">
+            <i data-lucide="calendar"></i>
+            <span id="current-date">June 14, 2026</span>
+          </div>
+          <button class="btn btn-primary" id="quick-action-btn">
+            <i data-lucide="plus"></i> Log Transaction
+          </button>
+        </div>
+      </header>
+      
+      <!-- Content Container -->
+      <div class="content-body">
+        
+        <!-- ================= TAB: DASHBOARD ================= -->
+        <section class="tab-content active" id="tab-dashboard">
+          
+          <!-- KPI Cards Grid -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span>Total Sales</span>
+                <i data-lucide="trending-up" class="color-green"></i>
+              </div>
+              <div class="kpi-value" id="kpi-total-sales">₹0</div>
+              <div class="kpi-subtext" id="kpi-total-sales-sub">May & June combined</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span>Total Purchases</span>
+                <i data-lucide="shopping-cart" class="color-orange"></i>
+              </div>
+              <div class="kpi-value" id="kpi-total-purchases">₹0</div>
+              <div class="kpi-subtext" id="kpi-total-purchases-sub">Inventory inward value</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span>Net Profit</span>
+                <i data-lucide="dollar-sign" class="color-green"></i>
+              </div>
+              <div class="kpi-value" id="kpi-net-profit">₹0</div>
+              <div class="kpi-subtext" id="kpi-net-profit-sub">Sales profit - expenses</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span>Inventory Valuation</span>
+                <i data-lucide="package" class="color-blue"></i>
+              </div>
+              <div class="kpi-value" id="kpi-inventory-value">₹0</div>
+              <div class="kpi-subtext">Value of closing stock (at cost)</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-header">
+                <span>Outstanding Payables</span>
+                <i data-lucide="clock" class="color-orange"></i>
+              </div>
+              <div class="kpi-value" id="kpi-payables">₹0</div>
+              <div class="kpi-subtext">Owed to Vendors</div>
+            </div>
+          </div>
+          
+          <!-- Low Stock Alert Banner -->
+          <div class="alert-banner hidden" id="low-stock-alert">
+            <div class="alert-content">
+              <i data-lucide="alert-triangle"></i>
+              <div>
+                <strong>Low Stock Alert!</strong>
+                <span id="low-stock-alert-text">The following items are below their reorder level: </span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-dark" onclick="switchTab('products')">Order Now</button>
+          </div>
+          
+          <!-- Charts Section -->
+          <div class="dashboard-charts">
+            <div class="chart-card">
+              <h3>Sales vs Purchases Trend (May & June)</h3>
+              <div class="chart-container">
+                <canvas id="salesPurchasesChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Top Products by Sales Value</h3>
+              <div class="chart-container">
+                <canvas id="productShareChart"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Recent Activity Table -->
+          <div class="table-card mt-3">
+            <div class="table-card-header">
+              <h3>Recent Sales & Purchases</h3>
+              <button class="btn btn-sm btn-outline" id="view-all-transactions">View All</button>
+            </div>
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Product</th>
+                    <th>Party</th>
+                    <th>Qty</th>
+                    <th>Total Value</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-transactions-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: PRODUCTS ================= -->
+        <section class="tab-content" id="tab-products">
+          <div class="tab-actions-header">
+            <div class="filter-group">
+              <input type="text" placeholder="Search products..." class="search-input" id="search-products">
+              <select class="filter-select" id="filter-product-cat">
+                <option value="all">All Categories</option>
+                <option value="coconuts">Coconuts</option>
+                <option value="spices">Spices/Dry Fruits</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="add-product-btn">
+              <i data-lucide="plus"></i> Add Product
+            </button>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>S.No</th>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>HSN Code</th>
+                    <th>GST Rate</th>
+                    <th>Stock In Hand</th>
+                    <th>Reorder Threshold</th>
+                    <th>Default Cost</th>
+                    <th>Default Sell</th>
+                    <th>Stock Value</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="products-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: VENDORS ================= -->
+        <section class="tab-content" id="tab-vendors">
+          <div class="tab-actions-header">
+            <div class="filter-group">
+              <input type="text" placeholder="Search vendors..." class="search-input" id="search-vendors">
+            </div>
+            <button class="btn btn-primary" id="add-vendor-btn">
+              <i data-lucide="plus"></i> Add Vendor
+            </button>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Vendor Name</th>
+                    <th>GSTIN</th>
+                    <th>State</th>
+                    <th>Contact Phone</th>
+                    <th>Email Address</th>
+                    <th>Location</th>
+                    <th>Outstanding Payable</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="vendors-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: CUSTOMERS ================= -->
+        <section class="tab-content" id="tab-customers">
+          <div class="tab-actions-header">
+            <div class="filter-group">
+              <input type="text" placeholder="Search customers..." class="search-input" id="search-customers">
+            </div>
+            <button class="btn btn-primary" id="add-customer-btn">
+              <i data-lucide="plus"></i> Add Customer
+            </button>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Customer Name</th>
+                    <th>GSTIN</th>
+                    <th>State</th>
+                    <th>Contact Phone</th>
+                    <th>Email Address</th>
+                    <th>Location</th>
+                    <th>Outstanding Receivable</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: PURCHASES ================= -->
+        <section class="tab-content" id="tab-purchases">
+          <div class="tab-actions-header">
+            <div class="filter-group">
+              <input type="text" placeholder="Search purchases..." class="search-input" id="search-purchases">
+              <select class="filter-select" id="filter-purchases-vendor">
+                <option value="all">All Vendors</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="log-purchase-btn">
+              <i data-lucide="plus"></i> Log Purchase
+            </button>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Vendor Name</th>
+                    <th>Product</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th>Taxable Value</th>
+                    <th>GST Billing</th>
+                    <th>GST Rate</th>
+                    <th>CGST</th>
+                    <th>SGST</th>
+                    <th>IGST</th>
+                    <th>Total Invoice</th>
+                    <th>Payment Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="purchases-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: SALES ================= -->
+        <section class="tab-content" id="tab-sales">
+          <div class="tab-actions-header">
+            <div class="filter-group">
+              <input type="text" placeholder="Search sales..." class="search-input" id="search-sales">
+              <select class="filter-select" id="filter-sales-customer">
+                <option value="all">All Customers</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="log-sale-btn">
+              <i data-lucide="plus"></i> Log Sale
+            </button>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Product Name</th>
+                    <th>Qty Sold</th>
+                    <th>Cost Rate</th>
+                    <th>Sell Rate</th>
+                    <th>Taxable Value</th>
+                    <th>GST Billing</th>
+                    <th>GST Rate</th>
+                    <th>CGST</th>
+                    <th>SGST</th>
+                    <th>IGST</th>
+                    <th>Total Invoice</th>
+                    <th>Estimated Profit</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="sales-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: PAYMENTS ================= -->
+        <section class="tab-content" id="tab-payments">
+          <div class="tab-actions-header">
+            <div class="filter-group">
+              <input type="text" placeholder="Search payments..." class="search-input" id="search-payments">
+              <select class="filter-select" id="filter-payment-type">
+                <option value="all">All Transactions</option>
+                <option value="vendor">Vendor Payments</option>
+                <option value="customer">Customer Receipts</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="record-payment-btn">
+              <i data-lucide="plus"></i> Record Payment/Receipt
+            </button>
+          </div>
+          
+          <div class="table-card">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Payment ID</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Party Name</th>
+                    <th>Amount Paid/Recd</th>
+                    <th>Payment Method</th>
+                    <th>Reference / Notes</th>
+                  </tr>
+                </thead>
+                <tbody id="payments-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: CUSTOMER LEDGERS ================= -->
+        <section class="tab-content" id="tab-custledgers">
+          <div class="ledger-header-panel">
+            <div class="form-group ledger-select-group">
+              <label for="cust-ledger-select">Select Customer Account</label>
+              <select class="form-control" id="cust-ledger-select">
+                <option value="">-- Select Customer --</option>
+              </select>
+            </div>
+            <div class="ledger-summary-metrics">
+              <div class="metric-box">
+                <span class="metric-lbl">Total Sales (Dr)</span>
+                <span class="metric-val text-green" id="cust-ledger-total-sales">₹0</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-lbl">Payments Received (Cr)</span>
+                <span class="metric-val text-red" id="cust-ledger-total-payments">₹0</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-lbl">Receivable Balance</span>
+                <span class="metric-val" id="cust-ledger-current-balance">₹0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="table-card mt-3">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Debit (Invoices)</th>
+                    <th>Credit (Payments Recd)</th>
+                    <th>Outstanding Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="cust-ledger-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB: VENDOR LEDGERS ================= -->
+        <section class="tab-content" id="tab-vendledgers">
+          <div class="ledger-header-panel">
+            <div class="form-group ledger-select-group">
+              <label for="vend-ledger-select">Select Vendor Account</label>
+              <select class="form-control" id="vend-ledger-select">
+                <option value="">-- Select Vendor --</option>
+              </select>
+            </div>
+            <div class="ledger-summary-metrics">
+              <div class="metric-box">
+                <span class="metric-lbl">Payments Made (Dr)</span>
+                <span class="metric-val text-green" id="vend-ledger-total-payments">₹0</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-lbl">Total Purchases (Cr)</span>
+                <span class="metric-val text-red" id="vend-ledger-total-purchases">₹0</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-lbl">Payable Balance</span>
+                <span class="metric-val" id="vend-ledger-current-balance">₹0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="table-card mt-3">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Debit (Payments Made)</th>
+                    <th>Credit (Purchases)</th>
+                    <th>Outstanding Payable</th>
+                  </tr>
+                </thead>
+                <tbody id="vend-ledger-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= TAB: CASH BOOK & GL ================= -->
+        <section class="tab-content" id="tab-cashbookledger">
+          <div class="ledger-header-panel">
+            <div class="form-group ledger-select-group">
+              <label for="gl-ledger-select">Select Ledger Account</label>
+              <select class="form-control" id="gl-ledger-select">
+                <option value="cashbook">Cash Book (General Cash/Bank)</option>
+                <option value="revenue">Sales Revenue Account</option>
+                <option value="purchases">Purchase Expenses Account</option>
+                <option value="expenses">General Expenses Account</option>
+              </select>
+            </div>
+            <div class="ledger-summary-metrics">
+              <div class="metric-box">
+                <span class="metric-lbl">Total Debits (Dr)</span>
+                <span class="metric-val text-green" id="gl-ledger-total-debit">₹0</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-lbl">Total Credits (Cr)</span>
+                <span class="metric-val text-red" id="gl-ledger-total-credit">₹0</span>
+              </div>
+              <div class="metric-box">
+                <span class="metric-lbl">Current Balance</span>
+                <span class="metric-val" id="gl-ledger-current-balance">₹0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="table-card mt-3">
+            <div class="table-responsive">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Dr (Inflow)</th>
+                    <th>Cr (Outflow)</th>
+                    <th>Running Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="gl-ledger-tbody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: BALANCE SHEET ================= -->
+        <section class="tab-content" id="tab-balancesheet">
+          <div class="balance-sheet-header">
+            <h2>Prime Serve Foods</h2>
+            <h3>Statement of Financial Position (Balance Sheet)</h3>
+            <p>Real-Time Financial Report — Year ending 2026</p>
+          </div>
+          
+          <div class="balance-sheet-layout">
+            <!-- Left Column: Assets -->
+            <div class="bs-column">
+              <div class="bs-section-title">ASSETS</div>
+              
+              <div class="bs-subsection">
+                <div class="bs-subsection-title">Current Assets</div>
+                
+                <div class="bs-row">
+                  <span class="bs-label">Cash Book Balance (Cash & Bank)</span>
+                  <span class="bs-val" id="bs-cash-val">₹0</span>
+                </div>
+                <div class="bs-row">
+                  <span class="bs-label">Accounts Receivable (Customer Outstandings)</span>
+                  <span class="bs-val" id="bs-receivables-val">₹0</span>
+                </div>
+                <div class="bs-row">
+                  <span class="bs-label">Closing Inventory (Stock valuation at cost)</span>
+                  <span class="bs-val" id="bs-stock-val">₹0</span>
+                </div>
+                <div class="bs-row" id="bs-gst-asset-row" style="display: none;">
+                  <span class="bs-label">GST Refundable (Input Tax Credit)</span>
+                  <span class="bs-val" id="bs-gst-asset-val">₹0</span>
+                </div>
+                <div class="bs-row subtotal">
+                  <span class="bs-label">Total Current Assets</span>
+                  <span class="bs-val" id="bs-total-current-assets">₹0</span>
+                </div>
+              </div>
+              
+              <div class="bs-row grand-total mt-4">
+                <span class="bs-label">TOTAL ASSETS</span>
+                <span class="bs-val" id="bs-total-assets">₹0</span>
+              </div>
+            </div>
+            
+            <!-- Right Column: Liabilities & Equity -->
+            <div class="bs-column">
+              <div class="bs-section-title">LIABILITIES & EQUITY</div>
+              
+              <div class="bs-subsection">
+                <div class="bs-subsection-title">Current Liabilities</div>
+                
+                <div class="bs-row">
+                  <span class="bs-label">Accounts Payable (Vendor Outstandings)</span>
+                  <span class="bs-val" id="bs-payables-val">₹0</span>
+                </div>
+                <div class="bs-row" id="bs-gst-liab-row" style="display: none;">
+                  <span class="bs-label">GST Payable (Net Output GST)</span>
+                  <span class="bs-val" id="bs-gst-liab-val">₹0</span>
+                </div>
+                <div class="bs-row subtotal">
+                  <span class="bs-label">Total Liabilities</span>
+                  <span class="bs-val" id="bs-total-liabilities">₹0</span>
+                </div>
+              </div>
+              
+              <div class="bs-subsection mt-4">
+                <div class="bs-subsection-title">Owner's Equity</div>
+                
+                <div class="bs-row">
+                  <span class="bs-label">Opening Capital (May 1st, 2026)</span>
+                  <span class="bs-val">₹120,000</span>
+                </div>
+                <div class="bs-row">
+                  <span class="bs-label">Retained Earnings (Net Profit)</span>
+                  <span class="bs-val" id="bs-retained-earnings-val">₹0</span>
+                </div>
+                <div class="bs-row subtotal">
+                  <span class="bs-label">Total Equity</span>
+                  <span class="bs-val" id="bs-total-equity">₹0</span>
+                </div>
+              </div>
+              
+              <div class="bs-row grand-total mt-4">
+                <span class="bs-label">TOTAL LIABILITIES & EQUITY</span>
+                <span class="bs-val" id="bs-total-liabilities-equity">₹0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="bs-validation-status" id="bs-status-banner">
+            <i data-lucide="check-circle" class="color-green"></i>
+            <span>Accounting Equation check: Assets (₹<span id="bs-eq-assets">0</span>) = Liabilities + Equity (₹<span id="bs-eq-liab-equity">0</span>). <strong>The Balance Sheet is perfectly balanced.</strong></span>
+          </div>
+        </section>
+        
+        <!-- ================= TAB: SETTINGS ================= -->
+        <section class="tab-content" id="tab-settings">
+          <div class="settings-card">
+            <h3>Google Sheets API Integration</h3>
+            <p class="settings-intro">
+              You can connect this dashboard to a live Google Sheet. When enabled, all details you input will immediately reflect in your Google Sheet, and the dashboard will fetch its information from your sheet in real-time.
+            </p>
+            
+            <div class="form-group mt-3">
+              <label for="settings-sheet-url">Google Apps Script Web App URL</label>
+              <input type="text" class="form-control" id="settings-sheet-url" placeholder="https://script.google.com/macros/s/.../exec">
+              <small class="form-help">Paste the deployed Web App URL from your Google Apps Script editor.</small>
+            </div>
+            
+            <div class="form-check mt-3">
+              <input type="checkbox" id="settings-sync-enabled">
+              <label for="settings-sync-enabled">Enable Google Sheets Sync (Disable Demo Mode)</label>
+            </div>
+            
+            <div class="settings-actions mt-4">
+              <button class="btn btn-primary" id="save-settings-btn">Save Sync Settings</button>
+              <button class="btn btn-outline" id="push-data-btn" disabled>Upload Local Data to Google Sheets</button>
+              <button class="btn btn-dark" id="reset-excel-btn" style="border-color: var(--accent-orange); color: var(--accent-orange);">Reset Database to Excel Data</button>
+            </div>
+          </div>
+          
+          <div class="settings-card mt-3">
+            <h3>Setup Instructions</h3>
+            <ol class="setup-steps">
+              <li>Open your Google Sheet (or create a new one).</li>
+              <li>Go to <strong>Extensions</strong> -> <strong>Apps Script</strong>.</li>
+              <li>Open the file <a href="file:///H:/Consultancy/Prime%20Serve%20Foods/google_apps_script.js" target="_blank">google_apps_script.js</a> in your workspace, copy its contents, and paste it into the script editor.</li>
+              <li>Click the <strong>Save</strong> icon.</li>
+              <li>Click <strong>Deploy</strong> -> <strong>New deployment</strong>. Select type: <strong>Web app</strong>.</li>
+              <li>Set:
+                <ul>
+                  <li>Execute as: <strong>Me (your email)</strong></li>
+                  <li>Who has access: <strong>Anyone</strong> (this allows the dashboard to save transactions).</li>
+                </ul>
+              </li>
+              <li>Click <strong>Deploy</strong> and copy the <strong>Web App URL</strong>.</li>
+              <li>Paste the URL above and click "Enable Google Sheets Sync".</li>
+            </ol>
+          </div>
+        </section>
+        
+      </div>
+    </main>
+  </div>
+  
+  <!-- ================= MODALS ================= -->
+  
+  <!-- 1. Modal: Log Transaction Quick Modal -->
+  <div class="modal" id="modal-quick-transaction">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Log Transaction</h3>
+        <button class="modal-close" onclick="closeModal('modal-quick-transaction')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p>What would you like to log?</p>
+        <div class="quick-btn-grid">
+          <button class="btn btn-primary" onclick="openModalFromQuick('sale')"><i data-lucide="trending-up"></i> Log a Customer Sale</button>
+          <button class="btn btn-outline" onclick="openModalFromQuick('purchase')"><i data-lucide="shopping-cart"></i> Log a Vendor Purchase</button>
+          <button class="btn btn-dark" onclick="openModalFromQuick('payment')"><i data-lucide="credit-card"></i> Log Payment / Receipt</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. Modal: Add Product -->
+  <div class="modal" id="modal-product">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modal-product-title">Add New Product</h3>
+        <button class="modal-close" onclick="closeModal('modal-product')">&times;</button>
+      </div>
+      <form id="form-product">
+        <input type="hidden" id="prod-form-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="prod-form-name">Product Name *</label>
+            <input type="text" class="form-control" id="prod-form-name" required placeholder="e.g. Palasa Choora 3.2MM">
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="prod-form-category">Category</label>
+              <select class="form-control" id="prod-form-category">
+                <option value="Coconuts">Coconuts</option>
+                <option value="Spices/Dry Fruits">Spices/Dry Fruits</option>
+              </select>
+            </div>
+            <div class="form-group col-6">
+              <label for="prod-form-unit">Unit of Measure</label>
+              <select class="form-control" id="prod-form-unit">
+                <option value="kg">Kilograms (kg)</option>
+                <option value="nos">Numbers (nos)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="prod-form-hsn">HSN Code *</label>
+              <input type="text" class="form-control" id="prod-form-hsn" required placeholder="e.g. 08011990">
+            </div>
+            <div class="form-group col-6">
+              <label for="prod-form-gst-rate">GST Rate *</label>
+              <select class="form-control" id="prod-form-gst-rate" required>
+                <option value="0">0% (GST Exempt)</option>
+                <option value="5">5% GST</option>
+                <option value="12">12% GST</option>
+                <option value="18" selected>18% GST</option>
+                <option value="28">28% GST</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-4">
+              <label for="prod-form-reorder">Reorder Threshold *</label>
+              <input type="number" class="form-control" id="prod-form-reorder" required value="50">
+            </div>
+            <div class="form-group col-4">
+              <label for="prod-form-cost">Default Cost Price *</label>
+              <input type="number" step="0.01" class="form-control" id="prod-form-cost" required value="0">
+            </div>
+            <div class="form-group col-4">
+              <label for="prod-form-sell">Default Sell Price *</label>
+              <input type="number" step="0.01" class="form-control" id="prod-form-sell" required value="0">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-product')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 3. Modal: Add Vendor -->
+  <div class="modal" id="modal-vendor">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Add New Vendor</h3>
+        <button class="modal-close" onclick="closeModal('modal-vendor')">&times;</button>
+      </div>
+      <form id="form-vendor">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="vnd-form-name">Vendor Business Name *</label>
+            <input type="text" class="form-control" id="vnd-form-name" required placeholder="e.g. Satish Coconuts">
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="vnd-form-gstin">GSTIN (15-digit) *</label>
+              <input type="text" class="form-control" id="vnd-form-gstin" required placeholder="e.g. 36AAAAA1111A1Z1" maxlength="15" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group col-6">
+              <label for="vnd-form-state">State *</label>
+              <select class="form-control" id="vnd-form-state" required>
+                <option value="Telangana" selected>Telangana (State Code 36)</option>
+                <option value="Andhra Pradesh">Andhra Pradesh (State Code 37)</option>
+                <option value="Karnataka">Karnataka (State Code 29)</option>
+                <option value="Tamil Nadu">Tamil Nadu (State Code 33)</option>
+                <option value="Maharashtra">Maharashtra (State Code 27)</option>
+                <option value="Delhi">Delhi (State Code 07)</option>
+                <option value="Gujarat">Gujarat (State Code 24)</option>
+                <option value="Kerala">Kerala (State Code 32)</option>
+                <option value="West Bengal">West Bengal (State Code 19)</option>
+                <option value="Rajasthan">Rajasthan (State Code 08)</option>
+                <option value="Uttar Pradesh">Uttar Pradesh (State Code 09)</option>
+                <option value="Haryana">Haryana (State Code 06)</option>
+                <option value="Madhya Pradesh">Madhya Pradesh (State Code 23)</option>
+                <option value="Other State">Other State / UT</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="vnd-form-phone">Contact Phone</label>
+            <input type="text" class="form-control" id="vnd-form-phone" placeholder="e.g. +91 91334 11145">
+          </div>
+          <div class="form-group">
+            <label for="vnd-form-email">Email Address</label>
+            <input type="email" class="form-control" id="vnd-form-email" placeholder="e.g. vendor@example.com">
+          </div>
+          <div class="form-group">
+            <label for="vnd-form-address">Location / Address</label>
+            <input type="text" class="form-control" id="vnd-form-address" placeholder="e.g. Hyderabad, Telangana">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-vendor')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Vendor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 4. Modal: Add Customer -->
+  <div class="modal" id="modal-customer">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Add New Customer</h3>
+        <button class="modal-close" onclick="closeModal('modal-customer')">&times;</button>
+      </div>
+      <form id="form-customer">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="cst-form-name">Customer Name *</label>
+            <input type="text" class="form-control" id="cst-form-name" required placeholder="e.g. BABAI HOTEL">
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="cst-form-gstin">GSTIN (15-digit) *</label>
+              <input type="text" class="form-control" id="cst-form-gstin" required placeholder="e.g. 36AAAAA1111A1Z1" maxlength="15" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group col-6">
+              <label for="cst-form-state">State *</label>
+              <select class="form-control" id="cst-form-state" required>
+                <option value="Telangana" selected>Telangana (State Code 36)</option>
+                <option value="Andhra Pradesh">Andhra Pradesh (State Code 37)</option>
+                <option value="Karnataka">Karnataka (State Code 29)</option>
+                <option value="Tamil Nadu">Tamil Nadu (State Code 33)</option>
+                <option value="Maharashtra">Maharashtra (State Code 27)</option>
+                <option value="Delhi">Delhi (State Code 07)</option>
+                <option value="Gujarat">Gujarat (State Code 24)</option>
+                <option value="Kerala">Kerala (State Code 32)</option>
+                <option value="West Bengal">West Bengal (State Code 19)</option>
+                <option value="Rajasthan">Rajasthan (State Code 08)</option>
+                <option value="Uttar Pradesh">Uttar Pradesh (State Code 09)</option>
+                <option value="Haryana">Haryana (State Code 06)</option>
+                <option value="Madhya Pradesh">Madhya Pradesh (State Code 23)</option>
+                <option value="Other State">Other State / UT</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="cst-form-phone">Contact Phone</label>
+            <input type="text" class="form-control" id="cst-form-phone" placeholder="e.g. +91 99999 88888">
+          </div>
+          <div class="form-group">
+            <label for="cst-form-email">Email Address</label>
+            <input type="email" class="form-control" id="cst-form-email" placeholder="e.g. buyer@example.com">
+          </div>
+          <div class="form-group">
+            <label for="cst-form-address">Location / Address</label>
+            <input type="text" class="form-control" id="cst-form-address" placeholder="e.g. Jubilee Hills, Hyderabad">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-customer')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Modal: Log Purchase -->
+  <div class="modal" id="modal-purchase">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Log Purchase (Inward Inventory)</h3>
+        <button class="modal-close" onclick="closeModal('modal-purchase')">&times;</button>
+      </div>
+      <form id="form-purchase">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group col-4">
+              <label for="pur-form-date">Purchase Date *</label>
+              <input type="date" class="form-control" id="pur-form-date" required>
+            </div>
+            <div class="form-group col-4">
+              <label for="pur-form-vendor">Vendor *</label>
+              <div class="input-with-action">
+                <select class="form-control" id="pur-form-vendor" required style="width: 70%;">
+                  <option value="">-- Select Vendor --</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-dark" onclick="openSubModal('vendor')">+ New</button>
+              </div>
+            </div>
+            <div class="form-group col-4">
+              <label for="pur-form-gst-treatment">GST Billing *</label>
+              <select class="form-control" id="pur-form-gst-treatment" required>
+                <option value="with">With GST</option>
+                <option value="without">Without GST</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Vendor GST details -->
+          <div class="gst-info-box hidden" id="pur-gst-info">
+            <div class="info-row">
+              <span>GSTIN: <strong id="pur-vendor-gstin-display">-</strong></span>
+              <span>State: <strong id="pur-vendor-state-display">-</strong></span>
+            </div>
+            <div class="info-row mt-1">
+              <span>Tax Category: <span class="badge" id="pur-tax-type-badge">-</span></span>
+            </div>
+          </div>
+
+          <div class="form-row mt-2">
+            <div class="form-group col-8">
+              <label for="pur-form-product">Product Item *</label>
+              <select class="form-control" id="pur-form-product" required>
+                <option value="">-- Select Product --</option>
+              </select>
+            </div>
+            <div class="form-group col-4">
+              <label for="pur-form-hsn">HSN Code</label>
+              <input type="text" class="form-control" id="pur-form-hsn" readonly placeholder="Auto">
+            </div>
+          </div>
+
+          <div class="form-row mt-2">
+            <div class="form-group col-4">
+              <label for="pur-form-qty">Quantity *</label>
+              <input type="number" step="0.01" class="form-control" id="pur-form-qty" required value="0">
+            </div>
+            <div class="form-group col-4">
+              <label for="pur-form-rate">Price / Unit *</label>
+              <input type="number" step="0.01" class="form-control" id="pur-form-rate" required value="0">
+            </div>
+            <div class="form-group col-4">
+              <label for="pur-form-gst-rate">GST Rate (%)</label>
+              <select class="form-control" id="pur-form-gst-rate" required>
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18%</option>
+                <option value="28">28%</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tax Calculations Details -->
+          <div class="tax-calculation-box mt-3">
+            <div class="calc-row">
+              <span>Taxable Value:</span>
+              <span class="font-weight-bold" id="pur-calc-taxable">₹0.00</span>
+            </div>
+            <div class="calc-row text-muted" id="pur-calc-cgst-row">
+              <span>CGST (Central Tax):</span>
+              <span id="pur-calc-cgst">₹0.00</span>
+            </div>
+            <div class="calc-row text-muted" id="pur-calc-sgst-row">
+              <span>SGST (State Tax):</span>
+              <span id="pur-calc-sgst">₹0.00</span>
+            </div>
+            <div class="calc-row text-muted" id="pur-calc-igst-row">
+              <span>IGST (Integrated Tax):</span>
+              <span id="pur-calc-igst">₹0.00</span>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.05); margin: 6px 0;">
+            <div class="calc-row total-row">
+              <span>Total Invoice Value:</span>
+              <span class="color-green font-weight-bold" id="pur-calc-total-display">₹0.00</span>
+            </div>
+          </div>
+
+          <!-- Hidden inputs for serializing compatibility with old form schema -->
+          <input type="hidden" id="pur-form-total" value="0">
+          <input type="hidden" id="pur-form-gst" value="0">
+
+          <div class="form-row mt-2">
+            <div class="form-group col-12">
+              <label for="pur-form-status">Payment Status *</label>
+              <select class="form-control" id="pur-form-status" required>
+                <option value="Pending">Pending (On Credit)</option>
+                <option value="Clear">Clear (Immediate Cash/UPI)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-purchase')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Log Purchase</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 6. Modal: Log Sale -->
+  <div class="modal" id="modal-sale">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Log Customer Sale (Outward Inventory)</h3>
+        <button class="modal-close" onclick="closeModal('modal-sale')">&times;</button>
+      </div>
+      <form id="form-sale">
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group col-4">
+              <label for="sale-form-date">Sale Date *</label>
+              <input type="date" class="form-control" id="sale-form-date" required>
+            </div>
+            <div class="form-group col-4">
+              <label for="sale-form-cust">Customer *</label>
+              <div class="input-with-action">
+                <select class="form-control" id="sale-form-cust" required style="width: 70%;">
+                  <option value="">-- Select Customer --</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-dark" onclick="openSubModal('customer')">+ New</button>
+              </div>
+            </div>
+            <div class="form-group col-4">
+              <label for="sale-form-gst-treatment">GST Billing *</label>
+              <select class="form-control" id="sale-form-gst-treatment" required>
+                <option value="with">With GST</option>
+                <option value="without">Without GST</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Customer GST details -->
+          <div class="gst-info-box hidden" id="sale-gst-info">
+            <div class="info-row">
+              <span>GSTIN: <strong id="sale-customer-gstin-display">-</strong></span>
+              <span>State: <strong id="sale-customer-state-display">-</strong></span>
+            </div>
+            <div class="info-row mt-1">
+              <span>Tax Category: <span class="badge" id="sale-tax-type-badge">-</span></span>
+            </div>
+          </div>
+
+          <div class="form-row mt-2">
+            <div class="form-group col-8">
+              <label for="sale-form-product">Product Item *</label>
+              <select class="form-control" id="sale-form-product" required>
+                <option value="">-- Select Product --</option>
+              </select>
+            </div>
+            <div class="form-group col-4">
+              <label for="sale-form-hsn">HSN Code</label>
+              <input type="text" class="form-control" id="sale-form-hsn" readonly placeholder="Auto">
+            </div>
+          </div>
+
+          <div class="form-row mt-2">
+            <div class="form-group col-3">
+              <label for="sale-form-qty">Quantity *</label>
+              <input type="number" step="0.01" class="form-control" id="sale-form-qty" required value="0">
+            </div>
+            <div class="form-group col-3" style="display:none;">
+              <label for="sale-form-costrate">Purchase Cost Rate</label>
+              <input type="number" step="0.01" class="form-control" id="sale-form-costrate" required readonly>
+            </div>
+            <div class="form-group col-4">
+              <label for="sale-form-sellrate">Unit Sell Price *</label>
+              <input type="number" step="0.01" class="form-control" id="sale-form-sellrate" required value="0">
+            </div>
+            <div class="form-group col-5">
+              <label for="sale-form-gst-rate">GST Rate (%)</label>
+              <select class="form-control" id="sale-form-gst-rate" required>
+                <option value="0">0%</option>
+                <option value="5">5%</option>
+                <option value="12">12%</option>
+                <option value="18">18%</option>
+                <option value="28">28%</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Tax Calculations Details -->
+          <div class="tax-calculation-box mt-3">
+            <div class="calc-row">
+              <span>Taxable Value:</span>
+              <span class="font-weight-bold" id="sale-calc-taxable">₹0.00</span>
+            </div>
+            <div class="calc-row text-muted" id="sale-calc-cgst-row">
+              <span>CGST (Central Tax):</span>
+              <span id="sale-calc-cgst">₹0.00</span>
+            </div>
+            <div class="calc-row text-muted" id="sale-calc-sgst-row">
+              <span>SGST (State Tax):</span>
+              <span id="sale-calc-sgst">₹0.00</span>
+            </div>
+            <div class="calc-row text-muted" id="sale-calc-igst-row">
+              <span>IGST (Integrated Tax):</span>
+              <span id="sale-calc-igst">₹0.00</span>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.05); margin: 6px 0;">
+            <div class="calc-row total-row">
+              <span>Total Invoice Value:</span>
+              <span class="color-green font-weight-bold" id="sale-calc-total-display">₹0.00</span>
+            </div>
+          </div>
+
+          <!-- Hidden inputs for serializing compatibility with old form schema -->
+          <input type="hidden" id="sale-form-total" value="0">
+          <input type="hidden" id="sale-form-gst" value="0">
+
+          <div class="form-row mt-2">
+            <div class="form-group col-12">
+              <label for="sale-form-status">Receipt Status *</label>
+              <select class="form-control" id="sale-form-status" required>
+                <option value="Pending">Pending (On Credit)</option>
+                <option value="Clear">Clear (Immediate Cash/UPI)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="alert-banner hidden mt-3" id="sale-stock-warning" style="background: rgba(255, 138, 42, 0.1); border-color: var(--accent-orange);">
+            <div class="alert-content">
+              <i data-lucide="alert-triangle" class="color-orange"></i>
+              <span id="sale-stock-warning-text" class="color-orange">Warning: Insufficient stock available.</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-sale')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="sale-submit-btn">Log Sale</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. Modal: Record Payment / Receipt -->
+  <div class="modal" id="modal-payment">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="modal-payment-title">Record Payment</h3>
+        <button class="modal-close" onclick="closeModal('modal-payment')">&times;</button>
+      </div>
+      <form id="form-payment">
+        <input type="hidden" id="pmt-form-ref-id">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="pmt-form-date">Payment Date *</label>
+            <input type="date" class="form-control" id="pmt-form-date" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-6">
+              <label for="pmt-form-type">Payment Type *</label>
+              <select class="form-control" id="pmt-form-type" required>
+                <option value="Vendor Payment">Vendor Payment (Outflow)</option>
+                <option value="Customer Receipt">Customer Receipt (Inflow)</option>
+              </select>
+            </div>
+            <div class="form-group col-6">
+              <label for="pmt-form-method">Payment Method *</label>
+              <select class="form-control" id="pmt-form-method" required>
+                <option value="PhonePe">PhonePe</option>
+                <option value="UPI">Google Pay / UPI</option>
+                <option value="Bank Transfer">Bank NEFT/IMPS</option>
+                <option value="Cash">Cash</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pmt-form-party">Select Party *</label>
+            <select class="form-control" id="pmt-form-party" required>
+              <option value="">-- Select Party --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="pmt-form-amount">Amount *</label>
+            <input type="number" step="0.01" class="form-control font-weight-bold" id="pmt-form-amount" required value="0">
+            <small class="form-help text-orange" id="pmt-party-outstanding-info"></small>
+          </div>
+          <div class="form-group">
+            <label for="pmt-form-notes">Reference / Notes</label>
+            <input type="text" class="form-control" id="pmt-form-notes" placeholder="e.g. Clear Invoice #32, partial payment">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-payment')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Javascript File link -->
+  <script src="app.js"></script>
+</body>
+</html>
