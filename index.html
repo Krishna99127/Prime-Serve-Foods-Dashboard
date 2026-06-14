@@ -817,10 +817,11 @@
   <div class="modal" id="modal-vendor">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3>Add New Vendor</h3>
+        <h3 id="modal-vendor-title">Add New Vendor</h3>
         <button class="modal-close" onclick="closeModal('modal-vendor')">&times;</button>
       </div>
       <form id="form-vendor">
+        <input type="hidden" id="vnd-form-id">
         <div class="modal-body">
           <div class="form-group">
             <label for="vnd-form-name">Vendor Business Name *</label>
@@ -876,10 +877,11 @@
   <div class="modal" id="modal-customer">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3>Add New Customer</h3>
+        <h3 id="modal-customer-title">Add New Customer</h3>
         <button class="modal-close" onclick="closeModal('modal-customer')">&times;</button>
       </div>
       <form id="form-customer">
+        <input type="hidden" id="cst-form-id">
         <div class="modal-body">
           <div class="form-group">
             <label for="cst-form-name">Customer Name *</label>

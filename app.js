@@ -355,7 +355,10 @@ function renderVendorsTable() {
       <td>${v.address}</td>
       <td class="${outstanding > 0 ? 'color-orange font-weight-bold' : ''}">₹${outstanding.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="openPaymentModal('Vendor Payment', '${v.name}')">Pay Vendor</button>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-sm btn-primary" onclick="openPaymentModal('Vendor Payment', '${v.name}')">Pay</button>
+          <button class="btn btn-sm btn-outline" onclick="editVendor('${v.id}')">Edit</button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -384,7 +387,10 @@ function renderCustomersTable() {
       <td>${c.address}</td>
       <td class="${outstanding > 0 ? 'color-green font-weight-bold' : ''}">₹${outstanding.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td>
-        <button class="btn btn-sm btn-primary" onclick="openPaymentModal('Customer Receipt', '${c.name}')">Log Receipt</button>
+        <div style="display: flex; gap: 6px;">
+          <button class="btn btn-sm btn-primary" onclick="openPaymentModal('Customer Receipt', '${c.name}')">Receipt</button>
+          <button class="btn btn-sm btn-outline" onclick="editCustomer('${c.id}')">Edit</button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
@@ -1219,9 +1225,10 @@ function setupFormHandlers() {
     recalculateAndRender();
   });
   
-  // 2. Add Vendor
+  // 2. Add/Edit Vendor
   document.getElementById("form-vendor").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const id = document.getElementById("vnd-form-id").value;
     const name = document.getElementById("vnd-form-name").value;
     const gstin = document.getElementById("vnd-form-gstin").value.toUpperCase();
     const stateVal = document.getElementById("vnd-form-state").value;
@@ -1230,7 +1237,7 @@ function setupFormHandlers() {
     const address = document.getElementById("vnd-form-address").value;
     
     const vendorData = {
-      id: "VND-" + String(state.vendors.length + 1).padStart(3, '0'),
+      id: id || "VND-" + String(state.vendors.length + 1).padStart(3, '0'),
       name,
       gstin,
       state: stateVal,
@@ -1239,20 +1246,46 @@ function setupFormHandlers() {
       address
     };
     
-    state.vendors.push(vendorData);
+    let oldName = "";
+    if (id) {
+      const idx = state.vendors.findIndex(v => v.id === id);
+      if (idx !== -1) {
+        oldName = state.vendors[idx].name;
+        state.vendors[idx] = vendorData;
+        
+        // Update name in past purchases and payments to maintain consistency
+        if (oldName !== name) {
+          state.purchases.forEach(p => { if (p.vendor === oldName) p.vendor = name; });
+          state.payments.forEach(pmt => { if (pmt.party_name === oldName) pmt.party_name = name; });
+        }
+      }
+    } else {
+      state.vendors.push(vendorData);
+    }
+    
     saveStateLocal();
     closeModal("modal-vendor");
     
     if (state.settings.syncEnabled) {
       await postToGoogleSheet("addVendor", vendorData);
+      
+      // If name changed, trigger a bulkSync for Purchases/Payments to keep sheets consistent
+      if (id && oldName && oldName !== name) {
+        const payload = {
+          "Purchases": state.purchases,
+          "Payments": state.payments
+        };
+        await postToGoogleSheet("bulkSync", payload);
+      }
     }
     
     recalculateAndRender();
   });
   
-  // 3. Add Customer
+  // 3. Add/Edit Customer
   document.getElementById("form-customer").addEventListener("submit", async (e) => {
     e.preventDefault();
+    const id = document.getElementById("cst-form-id").value;
     const name = document.getElementById("cst-form-name").value;
     const gstin = document.getElementById("cst-form-gstin").value.toUpperCase();
     const stateVal = document.getElementById("cst-form-state").value;
@@ -1261,7 +1294,7 @@ function setupFormHandlers() {
     const address = document.getElementById("cst-form-address").value;
     
     const customerData = {
-      id: "CST-" + String(state.customers.length + 1).padStart(3, '0'),
+      id: id || "CST-" + String(state.customers.length + 1).padStart(3, '0'),
       name,
       gstin,
       state: stateVal,
@@ -1270,12 +1303,37 @@ function setupFormHandlers() {
       address
     };
     
-    state.customers.push(customerData);
+    let oldName = "";
+    if (id) {
+      const idx = state.customers.findIndex(c => c.id === id);
+      if (idx !== -1) {
+        oldName = state.customers[idx].name;
+        state.customers[idx] = customerData;
+        
+        // Update name in past sales and payments to maintain consistency
+        if (oldName !== name) {
+          state.sales.forEach(s => { if (s.customer === oldName) s.customer = name; });
+          state.payments.forEach(pmt => { if (pmt.party_name === oldName) pmt.party_name = name; });
+        }
+      }
+    } else {
+      state.customers.push(customerData);
+    }
+    
     saveStateLocal();
     closeModal("modal-customer");
     
     if (state.settings.syncEnabled) {
       await postToGoogleSheet("addCustomer", customerData);
+      
+      // If name changed, trigger a bulkSync for Sales/Payments to keep sheets consistent
+      if (id && oldName && oldName !== name) {
+        const payload = {
+          "Sales": state.sales,
+          "Payments": state.payments
+        };
+        await postToGoogleSheet("bulkSync", payload);
+      }
     }
     
     recalculateAndRender();
@@ -1754,6 +1812,36 @@ function editProduct(productId) {
   document.getElementById("prod-form-reorder").value = p.reorder_level;
   document.getElementById("prod-form-cost").value = p.cost_price;
   document.getElementById("prod-form-sell").value = p.sell_price;
+}
+
+function editVendor(vendorId) {
+  const v = state.vendors.find(vend => vend.id === vendorId);
+  if (!v) return;
+  
+  openModal("modal-vendor");
+  document.getElementById("modal-vendor-title").textContent = "Edit Vendor Details";
+  document.getElementById("vnd-form-id").value = v.id;
+  document.getElementById("vnd-form-name").value = v.name;
+  document.getElementById("vnd-form-gstin").value = v.gstin || "";
+  document.getElementById("vnd-form-state").value = v.state || "Telangana";
+  document.getElementById("vnd-form-phone").value = v.phone || "";
+  document.getElementById("vnd-form-email").value = v.email || "";
+  document.getElementById("vnd-form-address").value = v.address || "";
+}
+
+function editCustomer(customerId) {
+  const c = state.customers.find(cust => cust.id === customerId);
+  if (!c) return;
+  
+  openModal("modal-customer");
+  document.getElementById("modal-customer-title").textContent = "Edit Customer Details";
+  document.getElementById("cst-form-id").value = c.id;
+  document.getElementById("cst-form-name").value = c.name;
+  document.getElementById("cst-form-gstin").value = c.gstin || "";
+  document.getElementById("cst-form-state").value = c.state || "Telangana";
+  document.getElementById("cst-form-phone").value = c.phone || "";
+  document.getElementById("cst-form-email").value = c.email || "";
+  document.getElementById("cst-form-address").value = c.address || "";
 }
 
 // ================= GOOGLE SHEETS HTTP SYNC ENGINE =================
