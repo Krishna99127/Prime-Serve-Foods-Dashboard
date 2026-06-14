@@ -438,6 +438,8 @@ body {
   width: 100%;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: auto;
+  scrollbar-color: rgba(255, 255, 255, 0.3) var(--bg-secondary);
 }
 
 .table-responsive table {
@@ -448,16 +450,32 @@ body {
   min-width: 1300px;
 }
 
+/* Freeze first column in tables */
+.table-responsive th:first-child,
+.table-responsive td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background-color: var(--bg-secondary) !important;
+  border-right: 2px solid var(--border-color);
+}
+
+.table-responsive th:first-child {
+  background-color: #171f1b !important;
+  z-index: 11;
+}
+
 /* Custom Scrollbar for Responsive Tables */
 .table-responsive::-webkit-scrollbar {
-  height: 6px;
+  height: 10px;
 }
 .table-responsive::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: rgba(0, 0, 0, 0.2);
 }
 .table-responsive::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.15);
+  background-color: rgba(255, 255, 255, 0.3);
   border-radius: var(--radius-sm);
+  border: 2px solid var(--bg-secondary);
 }
 .table-responsive::-webkit-scrollbar-thumb:hover {
   background-color: var(--accent-green);
