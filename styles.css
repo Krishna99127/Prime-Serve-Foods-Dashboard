@@ -437,6 +437,30 @@ body {
 .table-responsive {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  min-width: 1100px;
+}
+
+#tab-purchases table, #tab-sales table {
+  min-width: 1300px;
+}
+
+/* Custom Scrollbar for Responsive Tables */
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+.table-responsive::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+}
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-green);
 }
 
 table {
