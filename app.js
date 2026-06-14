@@ -433,9 +433,6 @@ function renderPurchasesTable() {
       <td>₹${taxable.toFixed(2)}</td>
       <td>${gstBilling}</td>
       <td>${gstRateVal}</td>
-      <td>₹${cgstVal.toFixed(2)}</td>
-      <td>₹${sgstVal.toFixed(2)}</td>
-      <td>₹${igstVal.toFixed(2)}</td>
       <td class="font-weight-bold">₹${p.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td><span class="badge ${badgeClass}">${p.payment_status}</span></td>
       <td>${actionButton}</td>
@@ -484,9 +481,6 @@ function renderSalesTable() {
       <td>₹${taxable.toFixed(2)}</td>
       <td>${gstBilling}</td>
       <td>${gstRateVal}</td>
-      <td>₹${cgstVal.toFixed(2)}</td>
-      <td>₹${sgstVal.toFixed(2)}</td>
-      <td>₹${igstVal.toFixed(2)}</td>
       <td class="font-weight-bold">₹${s.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td class="${isLoss ? 'color-orange' : 'color-green'}">₹${profit.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
       <td><span class="badge ${badgeClass}">${s.payment_status}</span></td>
