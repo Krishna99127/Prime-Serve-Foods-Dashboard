@@ -168,7 +168,6 @@ function doPost(e) {
         for (var i = 1; i < rows.length; i++) {
           if (rows[i][0] === id) {
             targetSheet.getRange(i + 1, colIndex).setValue(status);
-            break;
           }
         }
         return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Payment status updated" }))
@@ -181,36 +180,64 @@ function doPost(e) {
     var sheet = ss.getSheetByName(sheetName);
     var headers = HEADERS[sheetName];
     
-    // Check if ID already exists (for updates, like editing a product)
-    var rows = sheet.getDataRange().getValues();
-    var existingRowIdx = -1;
-    if (payload.id) {
-      for (var i = 1; i < rows.length; i++) {
-        if (rows[i][0] === payload.id) {
-          existingRowIdx = i + 1; // 1-based index
-          break;
+    var items = Array.isArray(payload) ? payload : [payload];
+    
+    if (sheetName === "Purchases" || sheetName === "Sales") {
+      // For multi-item transactions, clean existing entries by ID first, then append all new entries
+      if (items.length > 0 && items[0].id) {
+        var targetId = items[0].id;
+        var rows = sheet.getDataRange().getValues();
+        // Go backwards to preserve index ordering while deleting rows
+        for (var i = rows.length - 1; i >= 1; i--) {
+          if (rows[i][0] === targetId) {
+            sheet.deleteRow(i + 1);
+          }
         }
       }
-    }
-    
-    var rowValues = [];
-    for (var i = 0; i < headers.length; i++) {
-      var val = payload[headers[i]];
-      if (val === undefined || val === null) {
-        val = "";
+      
+      for (var k = 0; k < items.length; k++) {
+        var item = items[k];
+        var rowValues = [];
+        for (var i = 0; i < headers.length; i++) {
+          var val = item[headers[i]];
+          if (val === undefined || val === null) {
+            val = "";
+          }
+          rowValues.push(val);
+        }
+        sheet.appendRow(rowValues);
       }
-      rowValues.push(val);
-    }
-    
-    if (existingRowIdx !== -1) {
-      // Update existing row
-      sheet.getRange(existingRowIdx, 1, 1, headers.length).setValues([rowValues]);
     } else {
-      // Append new row
-      sheet.appendRow(rowValues);
+      // For other entities (Products, Vendors, Customers, Payments), do standard in-place update or append
+      var rows = sheet.getDataRange().getValues();
+      var existingRowIdx = -1;
+      var singlePayload = items[0];
+      if (singlePayload.id) {
+        for (var i = 1; i < rows.length; i++) {
+          if (rows[i][0] === singlePayload.id) {
+            existingRowIdx = i + 1;
+            break;
+          }
+        }
+      }
+      
+      var rowValues = [];
+      for (var i = 0; i < headers.length; i++) {
+        var val = singlePayload[headers[i]];
+        if (val === undefined || val === null) {
+          val = "";
+        }
+        rowValues.push(val);
+      }
+      
+      if (existingRowIdx !== -1) {
+        sheet.getRange(existingRowIdx, 1, 1, headers.length).setValues([rowValues]);
+      } else {
+        sheet.appendRow(rowValues);
+      }
     }
     
-    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Row saved successfully" }))
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Data saved successfully" }))
       .setMimeType(ContentService.MimeType.JSON);
       
   } catch (error) {

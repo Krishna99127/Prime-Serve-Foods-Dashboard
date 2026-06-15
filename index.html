@@ -995,7 +995,7 @@
 
   <!-- 5. Modal: Log Purchase -->
   <div class="modal" id="modal-purchase">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width: 850px;">
       <div class="modal-header">
         <h3 id="modal-purchase-title">Log Purchase (Inward Inventory)</h3>
         <button class="modal-close" onclick="closeModal('modal-purchase')">&times;</button>
@@ -1037,37 +1037,66 @@
             </div>
           </div>
 
-          <div class="form-row mt-2">
-            <div class="form-group col-8">
-              <label for="pur-form-product">Product Item *</label>
-              <select class="form-control" id="pur-form-product" required>
-                <option value="">-- Select Product --</option>
-              </select>
+          <!-- ADD PRODUCT PANEL -->
+          <div class="add-item-panel mt-3" style="border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.01);">
+            <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Add Item / Product</h4>
+            <div class="form-row">
+              <div class="form-group col-5">
+                <label for="pur-form-product">Product Item</label>
+                <select class="form-control" id="pur-form-product">
+                  <option value="">-- Select Product --</option>
+                </select>
+              </div>
+              <div class="form-group col-3">
+                <label for="pur-form-qty">Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="pur-form-qty" value="0">
+              </div>
+              <div class="form-group col-4">
+                <label for="pur-form-rate">Price / Unit</label>
+                <input type="number" step="0.01" class="form-control" id="pur-form-rate" value="0">
+              </div>
             </div>
-            <div class="form-group col-4">
-              <label for="pur-form-hsn">HSN Code</label>
-              <input type="text" class="form-control" id="pur-form-hsn" readonly placeholder="Auto">
+            <div class="form-row mt-2">
+              <div class="form-group col-3">
+                <label for="pur-form-hsn">HSN Code</label>
+                <input type="text" class="form-control" id="pur-form-hsn" readonly placeholder="Auto">
+              </div>
+              <div class="form-group col-4">
+                <label for="pur-form-gst-rate">GST Rate (%)</label>
+                <select class="form-control" id="pur-form-gst-rate">
+                  <option value="0">0%</option>
+                  <option value="5">5%</option>
+                  <option value="12">12%</option>
+                  <option value="18">18%</option>
+                  <option value="28">28%</option>
+                </select>
+              </div>
+              <div class="form-group col-5" style="display: flex; align-items: flex-end; justify-content: flex-end;">
+                <button type="button" class="btn btn-primary" id="btn-add-purchase-item" style="width: 100%;">+ Add Item</button>
+              </div>
             </div>
           </div>
 
-          <div class="form-row mt-2">
-            <div class="form-group col-4">
-              <label for="pur-form-qty">Quantity *</label>
-              <input type="number" step="0.01" class="form-control" id="pur-form-qty" required value="0">
-            </div>
-            <div class="form-group col-4">
-              <label for="pur-form-rate">Price / Unit *</label>
-              <input type="number" step="0.01" class="form-control" id="pur-form-rate" required value="0">
-            </div>
-            <div class="form-group col-4">
-              <label for="pur-form-gst-rate">GST Rate (%)</label>
-              <select class="form-control" id="pur-form-gst-rate" required>
-                <option value="0">0%</option>
-                <option value="5">5%</option>
-                <option value="12">12%</option>
-                <option value="18">18%</option>
-                <option value="28">28%</option>
-              </select>
+          <!-- ADDED ITEMS TABLE -->
+          <div class="added-items-section mt-3">
+            <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Added Items</h4>
+            <div class="table-responsive" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+              <table style="width: 100%; margin-bottom: 0;" class="table-sm">
+                <thead>
+                  <tr style="background: rgba(255,255,255,0.02); height: 35px; font-size: 12px; border-bottom: 1px solid var(--border-color);">
+                    <th style="padding: 6px 12px; text-align: left;">Product</th>
+                    <th style="padding: 6px 12px; text-align: center;">Qty</th>
+                    <th style="padding: 6px 12px; text-align: right;">Rate</th>
+                    <th style="padding: 6px 12px; text-align: right;">Taxable</th>
+                    <th style="padding: 6px 12px; text-align: right;">GST</th>
+                    <th style="padding: 6px 12px; text-align: right;">Total</th>
+                    <th style="padding: 6px 12px; width: 50px; text-align: center;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="purchase-items-tbody" style="font-size: 12px;">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -1120,7 +1149,7 @@
 
   <!-- 6. Modal: Log Sale -->
   <div class="modal" id="modal-sale">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width: 850px;">
       <div class="modal-header">
         <h3 id="modal-sale-title">Log Customer Sale (Outward Inventory)</h3>
         <button class="modal-close" onclick="closeModal('modal-sale')">&times;</button>
@@ -1150,7 +1179,7 @@
               </select>
             </div>
           </div>
-
+ 
           <!-- Customer GST details -->
           <div class="gst-info-box hidden" id="sale-gst-info">
             <div class="info-row">
@@ -1162,44 +1191,73 @@
             </div>
           </div>
 
-          <div class="form-row mt-2">
-            <div class="form-group col-8">
-              <label for="sale-form-product">Product Item *</label>
-              <select class="form-control" id="sale-form-product" required>
-                <option value="">-- Select Product --</option>
-              </select>
+          <!-- ADD PRODUCT PANEL -->
+          <div class="add-item-panel mt-3" style="border: 1px solid var(--border-color); padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.01);">
+            <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Add Item / Product</h4>
+            <div class="form-row">
+              <div class="form-group col-5">
+                <label for="sale-form-product">Product Item</label>
+                <select class="form-control" id="sale-form-product">
+                  <option value="">-- Select Product --</option>
+                </select>
+              </div>
+              <div class="form-group col-3">
+                <label for="sale-form-qty">Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="sale-form-qty" value="0">
+              </div>
+              <div class="form-group col-4">
+                <label for="sale-form-sellrate">Unit Sell Price</label>
+                <input type="number" step="0.01" class="form-control" id="sale-form-sellrate" value="0">
+              </div>
             </div>
-            <div class="form-group col-4">
-              <label for="sale-form-hsn">HSN Code</label>
-              <input type="text" class="form-control" id="sale-form-hsn" readonly placeholder="Auto">
+            <div class="form-row mt-2">
+              <div class="form-group col-3">
+                <label for="sale-form-hsn">HSN Code</label>
+                <input type="text" class="form-control" id="sale-form-hsn" readonly placeholder="Auto">
+              </div>
+              <div class="form-group col-3" style="display:none;">
+                <label for="sale-form-costrate">Purchase Cost Rate</label>
+                <input type="number" step="0.01" class="form-control" id="sale-form-costrate" readonly>
+              </div>
+              <div class="form-group col-4">
+                <label for="sale-form-gst-rate">GST Rate (%)</label>
+                <select class="form-control" id="sale-form-gst-rate">
+                  <option value="0">0%</option>
+                  <option value="5">5%</option>
+                  <option value="12">12%</option>
+                  <option value="18">18%</option>
+                  <option value="28">28%</option>
+                </select>
+              </div>
+              <div class="form-group col-5" style="display: flex; align-items: flex-end; justify-content: flex-end;">
+                <button type="button" class="btn btn-primary" id="btn-add-sale-item" style="width: 100%;">+ Add Item</button>
+              </div>
             </div>
           </div>
 
-          <div class="form-row mt-2">
-            <div class="form-group col-3">
-              <label for="sale-form-qty">Quantity *</label>
-              <input type="number" step="0.01" class="form-control" id="sale-form-qty" required value="0">
-            </div>
-            <div class="form-group col-3" style="display:none;">
-              <label for="sale-form-costrate">Purchase Cost Rate</label>
-              <input type="number" step="0.01" class="form-control" id="sale-form-costrate" required readonly>
-            </div>
-            <div class="form-group col-4">
-              <label for="sale-form-sellrate">Unit Sell Price *</label>
-              <input type="number" step="0.01" class="form-control" id="sale-form-sellrate" required value="0">
-            </div>
-            <div class="form-group col-5">
-              <label for="sale-form-gst-rate">GST Rate (%)</label>
-              <select class="form-control" id="sale-form-gst-rate" required>
-                <option value="0">0%</option>
-                <option value="5">5%</option>
-                <option value="12">12%</option>
-                <option value="18">18%</option>
-                <option value="28">28%</option>
-              </select>
+          <!-- ADDED ITEMS TABLE -->
+          <div class="added-items-section mt-3">
+            <h4 style="margin-top: 0; margin-bottom: 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary);">Added Items</h4>
+            <div class="table-responsive" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+              <table style="width: 100%; margin-bottom: 0;" class="table-sm">
+                <thead>
+                  <tr style="background: rgba(255,255,255,0.02); height: 35px; font-size: 12px; border-bottom: 1px solid var(--border-color);">
+                    <th style="padding: 6px 12px; text-align: left;">Product</th>
+                    <th style="padding: 6px 12px; text-align: center;">Qty</th>
+                    <th style="padding: 6px 12px; text-align: right;">Rate</th>
+                    <th style="padding: 6px 12px; text-align: right;">Taxable</th>
+                    <th style="padding: 6px 12px; text-align: right;">GST</th>
+                    <th style="padding: 6px 12px; text-align: right;">Total</th>
+                    <th style="padding: 6px 12px; width: 50px; text-align: center;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="sale-items-tbody" style="font-size: 12px;">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
             </div>
           </div>
-
+ 
           <!-- Tax Calculations Details -->
           <div class="tax-calculation-box mt-3">
             <div class="calc-row">
@@ -1224,11 +1282,11 @@
               <span class="color-green font-weight-bold" id="sale-calc-total-display">₹0.00</span>
             </div>
           </div>
-
+ 
           <!-- Hidden inputs for serializing compatibility with old form schema -->
           <input type="hidden" id="sale-form-total" value="0">
           <input type="hidden" id="sale-form-gst" value="0">
-
+ 
           <div class="form-row mt-2">
             <div class="form-group col-12">
               <label for="sale-form-status">Receipt Status *</label>
@@ -1238,7 +1296,7 @@
               </select>
             </div>
           </div>
-
+ 
           <div class="alert-banner hidden mt-3" id="sale-stock-warning" style="background: rgba(255, 138, 42, 0.1); border-color: var(--accent-orange);">
             <div class="alert-content">
               <i data-lucide="alert-triangle" class="color-orange"></i>

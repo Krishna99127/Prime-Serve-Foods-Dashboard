@@ -26,6 +26,8 @@ let state = {
 // Charts references
 let salesPurchasesChart = null;
 let productShareChart = null;
+let currentSaleItems = [];
+let currentPurchaseItems = [];
 
 // Initialize the Application
 window.addEventListener("DOMContentLoaded", async () => {
@@ -89,11 +91,9 @@ window.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("pur-form-date").value = new Date().toISOString().substring(0,10);
       document.getElementById("form-purchase").reset();
       document.getElementById("pur-gst-info").classList.add("hidden");
-      document.getElementById("pur-calc-taxable").textContent = "₹0.00";
-      document.getElementById("pur-calc-cgst").textContent = "₹0.00";
-      document.getElementById("pur-calc-sgst").textContent = "₹0.00";
-      document.getElementById("pur-calc-igst").textContent = "₹0.00";
-      document.getElementById("pur-calc-total-display").textContent = "₹0.00";
+      currentPurchaseItems = [];
+      renderPurchaseItemsTable();
+      updatePurchaseTotals();
     });
   }
   
@@ -106,12 +106,10 @@ window.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("sale-form-date").value = new Date().toISOString().substring(0,10);
       document.getElementById("form-sale").reset();
       document.getElementById("sale-gst-info").classList.add("hidden");
-      document.getElementById("sale-calc-taxable").textContent = "₹0.00";
-      document.getElementById("sale-calc-cgst").textContent = "₹0.00";
-      document.getElementById("sale-calc-sgst").textContent = "₹0.00";
-      document.getElementById("sale-calc-igst").textContent = "₹0.00";
-      document.getElementById("sale-calc-total-display").textContent = "₹0.00";
       document.getElementById("sale-stock-warning").classList.add("hidden");
+      currentSaleItems = [];
+      renderSaleItemsTable();
+      updateSaleTotals();
     });
   }
   
@@ -132,6 +130,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     recalculateAndRender();
   }
   
+  // Bind Add Item buttons for multi-product
+  const btnAddPurchaseItem = document.getElementById("btn-add-purchase-item");
+  if (btnAddPurchaseItem) {
+    btnAddPurchaseItem.addEventListener("click", addPurchaseItem);
+  }
+  const btnAddSaleItem = document.getElementById("btn-add-sale-item");
+  if (btnAddSaleItem) {
+    btnAddSaleItem.addEventListener("click", addSaleItem);
+  }
   // Bind form submissions
   setupFormHandlers();
   setupFilterHandlers();
@@ -451,6 +458,7 @@ function renderCustomersTable() {
 
 function renderPurchasesTable() {
   const tbody = document.getElementById("purchases-tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
   
   const searchVal = document.getElementById("search-purchases").value.toLowerCase();
@@ -461,24 +469,17 @@ function renderPurchasesTable() {
   const toDate = document.getElementById("filter-purchases-to").value;
   const sortBy = document.getElementById("sort-purchases").value;
   
-  let list = state.purchases.filter(p => {
-    if (searchVal && !p.product.toLowerCase().includes(searchVal) && !p.vendor.toLowerCase().includes(searchVal)) return false;
+  let list = groupPurchases(state.purchases).filter(p => {
+    if (searchVal && 
+        !p.vendor.toLowerCase().includes(searchVal) && 
+        !p.id.toLowerCase().includes(searchVal) &&
+        !p.products.some(prodName => prodName.toLowerCase().includes(searchVal))) return false;
     if (filterVendor !== "all" && p.vendor !== filterVendor) return false;
     if (filterStatus !== "all" && p.payment_status !== filterStatus) return false;
     if (filterGst !== "all" && p.gst_billing !== filterGst) return false;
     if (fromDate && new Date(p.date) < new Date(fromDate)) return false;
     if (toDate && new Date(p.date) > new Date(toDate)) return false;
     return true;
-  });
-  
-  list = list.map(p => {
-    const taxable = parseFloat(p.taxable_value) || (p.quantity * p.rate) || 0;
-    const total = parseFloat(p.total) || 0;
-    return {
-      ...p,
-      taxable,
-      total
-    };
   });
   
   list.sort((a, b) => {
@@ -491,9 +492,9 @@ function renderPurchasesTable() {
     } else if (sortBy === "total-asc") {
       return a.total - b.total;
     } else if (sortBy === "taxable-desc") {
-      return b.taxable - a.taxable;
+      return b.taxable_value - a.taxable_value;
     } else if (sortBy === "taxable-asc") {
-      return a.taxable - b.taxable;
+      return a.taxable_value - b.taxable_value;
     } else if (sortBy === "vendor-asc") {
       return a.vendor.localeCompare(b.vendor);
     } else if (sortBy === "vendor-desc") {
@@ -510,7 +511,14 @@ function renderPurchasesTable() {
     const editButton = `<button class="btn btn-sm btn-outline" onclick="editPurchase('${p.id}')">Edit</button>`;
     const actionCell = `<div style="display: flex; gap: 6px;">${payButton}${editButton}</div>`;
       
-    const gstRateVal = p.gst_rate !== undefined ? `${p.gst_rate}%` : '-';
+    const gstRateVal = p.gst_rates.length === 1 
+      ? `${p.gst_rates[0]}%` 
+      : (p.gst_rates.length <= 2 ? p.gst_rates.map(r => `${r}%`).join(", ") : "Multi");
+      
+    const rateVal = p.rates.length === 1 
+      ? `₹${p.rates[0].toFixed(2)}` 
+      : (p.rates.length <= 2 ? p.rates.map(r => `₹${r.toFixed(2)}`).join(", ") : "Multi");
+      
     const gstBilling = p.gst_billing || "With GST";
  
     const tr = document.createElement("tr");
@@ -518,10 +526,10 @@ function renderPurchasesTable() {
       <td>${p.id}</td>
       <td>${p.date}</td>
       <td class="font-weight-bold">${p.vendor}</td>
-      <td>${p.product}</td>
+      <td>${p.products.join(", ")}</td>
       <td>${p.quantity}</td>
-      <td>₹${p.rate.toFixed(2)}</td>
-      <td>₹${p.taxable.toFixed(2)}</td>
+      <td>${rateVal}</td>
+      <td>₹${p.taxable_value.toFixed(2)}</td>
       <td>${gstBilling}</td>
       <td>${gstRateVal}</td>
       <td class="font-weight-bold">₹${p.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -534,6 +542,7 @@ function renderPurchasesTable() {
 
 function renderSalesTable() {
   const tbody = document.getElementById("sales-tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
   
   const searchVal = document.getElementById("search-sales").value.toLowerCase();
@@ -544,8 +553,11 @@ function renderSalesTable() {
   const toDate = document.getElementById("filter-sales-to").value;
   const sortBy = document.getElementById("sort-sales").value;
   
-  let list = state.sales.filter(s => {
-    if (searchVal && !s.product.toLowerCase().includes(searchVal) && !s.customer.toLowerCase().includes(searchVal)) return false;
+  let list = groupSales(state.sales).filter(s => {
+    if (searchVal && 
+        !s.customer.toLowerCase().includes(searchVal) && 
+        !s.id.toLowerCase().includes(searchVal) &&
+        !s.products.some(prodName => prodName.toLowerCase().includes(searchVal))) return false;
     if (filterCust !== "all" && s.customer !== filterCust) return false;
     if (filterStatus !== "all" && s.payment_status !== filterStatus) return false;
     if (filterGst !== "all" && s.gst_billing !== filterGst) return false;
@@ -555,18 +567,10 @@ function renderSalesTable() {
   });
   
   list = list.map(s => {
-    const costRate = parseFloat(s.cost_rate) || 0;
-    const costTotal = parseFloat(s.cost_total) || (s.quantity * costRate) || 0;
-    const total = parseFloat(s.total) || 0;
-    const profit = total - costTotal;
-    const taxable = parseFloat(s.taxable_value) || (s.quantity * s.rate) || 0;
+    const profit = s.total - s.cost_total;
     return {
       ...s,
-      costRate,
-      costTotal,
-      total,
-      profit,
-      taxable
+      profit
     };
   });
   
@@ -600,7 +604,18 @@ function renderSalesTable() {
     const editButton = `<button class="btn btn-sm btn-outline" onclick="editSale('${s.id}')">Edit</button>`;
     const actionCell = `<div style="display: flex; gap: 6px;">${payButton}${editButton}</div>`;
       
-    const gstRateVal = s.gst_rate !== undefined ? `${s.gst_rate}%` : '-';
+    const gstRateVal = s.gst_rates.length === 1 
+      ? `${s.gst_rates[0]}%` 
+      : (s.gst_rates.length <= 2 ? s.gst_rates.map(r => `${r}%`).join(", ") : "Multi");
+      
+    const costRateVal = s.costRates.length === 1 
+      ? `₹${s.costRates[0].toFixed(2)}` 
+      : (s.costRates.length <= 2 ? s.costRates.map(r => `₹${r.toFixed(2)}`).join(", ") : "Multi");
+      
+    const rateVal = s.rates.length === 1 
+      ? `₹${s.rates[0].toFixed(2)}` 
+      : (s.rates.length <= 2 ? s.rates.map(r => `₹${r.toFixed(2)}`).join(", ") : "Multi");
+      
     const gstBilling = s.gst_billing || "With GST";
  
     const tr = document.createElement("tr");
@@ -608,11 +623,11 @@ function renderSalesTable() {
       <td>${s.id}</td>
       <td>${s.date}</td>
       <td class="font-weight-bold">${s.customer}</td>
-      <td>${s.product}</td>
+      <td>${s.products.join(", ")}</td>
       <td>${s.quantity}</td>
-      <td>₹${s.costRate.toFixed(2)}</td>
-      <td>₹${s.rate.toFixed(2)}</td>
-      <td>₹${s.taxable.toFixed(2)}</td>
+      <td>${costRateVal}</td>
+      <td>${rateVal}</td>
+      <td>₹${s.taxable_value.toFixed(2)}</td>
       <td>${gstBilling}</td>
       <td>${gstRateVal}</td>
       <td class="font-weight-bold">₹${s.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -656,15 +671,16 @@ function renderPaymentsTable() {
 
 function renderRecentTransactions() {
   const tbody = document.getElementById("recent-transactions-tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
   
   const combined = [];
-  state.purchases.forEach(p => {
+  groupPurchases(state.purchases).forEach(p => {
     if (p.vendor.toLowerCase() !== 'opening stock') {
       combined.push({ ...p, txn_type: "Purchase", party: p.vendor });
     }
   });
-  state.sales.forEach(s => combined.push({ ...s, txn_type: "Sale", party: s.customer }));
+  groupSales(state.sales).forEach(s => combined.push({ ...s, txn_type: "Sale", party: s.customer }));
   
   combined.sort((a, b) => new Date(b.date) - new Date(a.date));
   const recent = combined.slice(0, 8);
@@ -673,11 +689,13 @@ function renderRecentTransactions() {
     const badgeClass = txn.payment_status === "Clear" ? "badge-paid" : "badge-pending";
     const typeColor = txn.txn_type === "Sale" ? "color-green" : "color-orange";
     
+    const productText = txn.products.join(", ");
+    
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${txn.date}</td>
       <td class="font-weight-bold ${typeColor}">${txn.txn_type}</td>
-      <td>${txn.product}</td>
+      <td>${productText}</td>
       <td>${txn.party}</td>
       <td>${txn.quantity}</td>
       <td class="font-weight-bold">₹${txn.total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
@@ -691,9 +709,10 @@ function renderRecentTransactions() {
   let inventoryVal = state.products.reduce((sum, p) => sum + ((parseFloat(p.stock) || 0) * (parseFloat(p.cost_price) || 0)), 0);
   
   let salesProfit = state.sales.reduce((sum, s) => {
+    const totalVal = parseFloat(s.total) || 0;
     const costRate = parseFloat(s.cost_rate) || 0;
-    const costTotal = parseFloat(s.cost_total) || (s.quantity * costRate) || 0;
-    return sum + ((parseFloat(s.total) || 0) - costTotal);
+    const costTotal = parseFloat(s.cost_total) || ((parseFloat(s.quantity) || 0) * costRate) || 0;
+    return sum + (totalVal - costTotal);
   }, 0);
   let otherExpenses = getGeneralExpensesSum();
   let netProfit = salesProfit - otherExpenses;
@@ -744,6 +763,7 @@ function getGeneralExpensesSum() {
 function renderCustomerLedger() {
   const custName = document.getElementById("cust-ledger-select").value;
   const tbody = document.getElementById("cust-ledger-tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
   
   if (!custName) {
@@ -758,22 +778,20 @@ function renderCustomerLedger() {
   let totalSales = 0;
   let totalPayments = 0;
   
-  state.sales.forEach(s => {
-    if (s.customer === custName) {
+  const groupedSales = groupSales(state.sales.filter(s => s.customer === custName));
+  groupedSales.forEach(s => {
+    const desc = `Sales Invoice: ${s.id} [${s.products.join(", ")}]`;
+    ledgerEntries.push({
+      date: s.date,
+      description: desc,
+      debit: s.total,
+      credit: 0
+    });
+    
+    if (s.payment_status === "Clear") {
       ledgerEntries.push({
         date: s.date,
-        description: `Sales Invoice: ${s.product} (${s.quantity} units)`,
-        debit: s.total,
-        credit: 0
-      });
-    }
-  });
-  
-  state.sales.forEach(s => {
-    if (s.customer === custName && s.payment_status === "Clear") {
-      ledgerEntries.push({
-        date: s.date,
-        description: `Immediate Payment Received [Cash/UPI]`,
+        description: `Immediate Payment Received [Cash/UPI] for Invoice ${s.id}`,
         debit: 0,
         credit: s.total
       });
@@ -817,6 +835,7 @@ function renderCustomerLedger() {
 function renderVendorLedger() {
   const vendorName = document.getElementById("vend-ledger-select").value;
   const tbody = document.getElementById("vend-ledger-tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
   
   if (!vendorName) {
@@ -831,22 +850,20 @@ function renderVendorLedger() {
   let totalPurchases = 0;
   let totalPayments = 0;
   
-  state.purchases.forEach(p => {
-    if (p.vendor === vendorName) {
+  const groupedPurchases = groupPurchases(state.purchases.filter(p => p.vendor === vendorName));
+  groupedPurchases.forEach(p => {
+    const desc = `Purchase Invoice: ${p.id} [${p.products.join(", ")}]`;
+    ledgerEntries.push({
+      date: p.date,
+      description: desc,
+      debit: 0,
+      credit: p.total
+    });
+    
+    if (p.payment_status === "Clear") {
       ledgerEntries.push({
         date: p.date,
-        description: `Purchase Invoice: ${p.product} (${p.quantity} units)`,
-        debit: 0,
-        credit: p.total
-      });
-    }
-  });
-  
-  state.purchases.forEach(p => {
-    if (p.vendor === vendorName && p.payment_status === "Clear") {
-      ledgerEntries.push({
-        date: p.date,
-        description: `Immediate Settle Payment [Cash/UPI]`,
+        description: `Immediate Settle Payment [Cash/UPI] for Invoice ${p.id}`,
         debit: p.total,
         credit: 0
       });
@@ -1044,7 +1061,7 @@ function renderBalanceSheet() {
   let totalPayables = state.vendors.reduce((sum, v) => sum + getVendorOutstanding(v.name), 0);
   let totalLiabilities = totalPayables + gstLiabVal;
   
-  let salesProfit = state.sales.reduce((sum, s) => sum + ((s.taxable_value || s.total) - s.cost_total), 0);
+  let salesProfit = state.sales.reduce((sum, s) => sum + ((parseFloat(s.taxable_value) || parseFloat(s.total) || 0) - (parseFloat(s.cost_total) || 0)), 0);
   let otherExpenses = getGeneralExpensesSum();
   let netProfit = salesProfit - otherExpenses;
   
@@ -1266,6 +1283,9 @@ function openModalFromQuick(type) {
       document.getElementById("modal-sale-title").textContent = "Log Customer Sale (Outward Inventory)";
       document.getElementById("sale-form-date").value = new Date().toISOString().substring(0,10);
       document.getElementById("form-sale").reset();
+      currentSaleItems = [];
+      renderSaleItemsTable();
+      updateSaleTotals();
     }
   } else if (type === 'purchase') {
     const btn = document.getElementById("log-purchase-btn");
@@ -1276,6 +1296,9 @@ function openModalFromQuick(type) {
       document.getElementById("modal-purchase-title").textContent = "Log Purchase (Inward Inventory)";
       document.getElementById("pur-form-date").value = new Date().toISOString().substring(0,10);
       document.getElementById("form-purchase").reset();
+      currentPurchaseItems = [];
+      renderPurchaseItemsTable();
+      updatePurchaseTotals();
     }
   } else if (type === 'payment') {
     openModal('modal-payment');
@@ -1491,70 +1514,19 @@ function setupFormHandlers() {
   const purGstRate = document.getElementById("pur-form-gst-rate");
   const purTotal = document.getElementById("pur-form-total");
   const purGst = document.getElementById("pur-form-gst");
-  
-  const updatePurchaseTotal = () => {
-    const qty = parseFloat(purQty.value) || 0;
-    const rate = parseFloat(purRate.value) || 0;
-    
-    const gstTreatment = document.getElementById("pur-form-gst-treatment").value;
-    let gstRateVal = 0;
-    if (gstTreatment === "without") {
-      purGstRate.disabled = true;
-      purGstRate.value = "0";
-    } else {
-      purGstRate.disabled = false;
-      gstRateVal = parseFloat(purGstRate.value) || 0;
-    }
-    
-    const taxable = qty * rate;
-    document.getElementById("pur-calc-taxable").textContent = "₹" + taxable.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    
-    const vendorName = document.getElementById("pur-form-vendor").value;
-    const vendor = state.vendors.find(v => v.name === vendorName);
-    const stateName = vendor ? (vendor.state || "Telangana") : "Telangana";
-    const isLocal = stateName.toLowerCase() === "telangana";
-    
-    let cgst = 0, sgst = 0, igst = 0;
-    if (isLocal) {
-      cgst = taxable * (gstRateVal / 2) / 100;
-      sgst = taxable * (gstRateVal / 2) / 100;
-      document.getElementById("pur-calc-cgst-row").style.display = "flex";
-      document.getElementById("pur-calc-sgst-row").style.display = "flex";
-      document.getElementById("pur-calc-igst-row").style.display = "none";
-    } else {
-      igst = taxable * gstRateVal / 100;
-      document.getElementById("pur-calc-cgst-row").style.display = "none";
-      document.getElementById("pur-calc-sgst-row").style.display = "none";
-      document.getElementById("pur-calc-igst-row").style.display = "flex";
-    }
-    
-    const gstAmount = cgst + sgst + igst;
-    const total = taxable + gstAmount;
-    
-    document.getElementById("pur-calc-cgst").textContent = "₹" + cgst.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    document.getElementById("pur-calc-sgst").textContent = "₹" + sgst.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    document.getElementById("pur-calc-igst").textContent = "₹" + igst.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    document.getElementById("pur-calc-total-display").textContent = "₹" + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    
-    // Set hidden inputs for old serialization compatibility
-    purTotal.value = total.toFixed(2);
-    purGst.value = gstAmount.toFixed(2);
-  };
-  
-  purQty.addEventListener("input", updatePurchaseTotal);
-  purRate.addEventListener("input", updatePurchaseTotal);
-  purGstRate.addEventListener("change", updatePurchaseTotal);
-  document.getElementById("pur-form-gst-treatment").addEventListener("change", updatePurchaseTotal);
+
+  document.getElementById("pur-form-gst-treatment").addEventListener("change", () => {
+    updatePurchaseTotals();
+  });
   
   // Product change handler to prefill HSN and GST Rate
   document.getElementById("pur-form-product").addEventListener("change", (e) => {
     const pName = e.target.value;
     const p = state.products.find(prod => prod.name === pName);
     if (p) {
-      purRate.value = p.cost_price || 0;
+      document.getElementById("pur-form-rate").value = p.cost_price || 0;
       document.getElementById("pur-form-hsn").value = p.hsn || "";
-      purGstRate.value = p.gst_rate !== undefined ? p.gst_rate : "18";
-      updatePurchaseTotal();
+      document.getElementById("pur-form-gst-rate").value = p.gst_rate !== undefined ? p.gst_rate : "18";
     }
   });
   
@@ -1580,73 +1552,79 @@ function setupFormHandlers() {
     } else {
       infoBox.classList.add("hidden");
     }
-    updatePurchaseTotal();
+    updatePurchaseTotals();
   });
   
   document.getElementById("form-purchase").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const id = document.getElementById("pur-form-id").value;
+    
+    if (currentPurchaseItems.length === 0) {
+      alert("Please add at least one product item.");
+      return;
+    }
+    
+    let id = document.getElementById("pur-form-id").value;
+    if (!id) {
+      const distinctPurchaseInvoices = new Set(state.purchases.map(p => p.id));
+      const purchaseInvoiceNum = distinctPurchaseInvoices.size + 1;
+      id = "PUR-NEW-" + String(purchaseInvoiceNum).padStart(3, '0');
+    }
+    
     const date = document.getElementById("pur-form-date").value;
     const vendor = document.getElementById("pur-form-vendor").value;
-    const product = document.getElementById("pur-form-product").value;
-    const qty = parseFloat(purQty.value) || 0;
-    const rate = parseFloat(purRate.value) || 0;
-    const gstRateVal = parseFloat(purGstRate.value) || 0;
-    const taxable = qty * rate;
+    const status = document.getElementById("pur-form-status").value;
+    const gstTreatment = document.getElementById("pur-form-gst-treatment").value;
+    const gstBillingVal = gstTreatment === "without" ? "Without GST" : "With GST";
     
     const vendorObj = state.vendors.find(v => v.name === vendor);
     const stateName = vendorObj ? (vendorObj.state || "Telangana") : "Telangana";
     const isLocal = stateName.toLowerCase() === "telangana";
     
-    let cgst = 0, sgst = 0, igst = 0;
-    if (isLocal) {
-      cgst = taxable * (gstRateVal / 2) / 100;
-      sgst = taxable * (gstRateVal / 2) / 100;
-    } else {
-      igst = taxable * gstRateVal / 100;
-    }
-    const gstAmount = cgst + sgst + igst;
-    const total = taxable + gstAmount;
-    const status = document.getElementById("pur-form-status").value;
-    const gstTreatment = document.getElementById("pur-form-gst-treatment").value;
-    const gstBillingVal = gstTreatment === "without" ? "Without GST" : "With GST";
-    
-    const purchaseData = {
-      id: id || "PUR-NEW-" + String(state.purchases.length + 1).padStart(3, '0'),
-      date,
-      vendor,
-      product,
-      quantity: qty,
-      rate,
-      taxable_value: taxable,
-      gst_rate: gstRateVal,
-      cgst,
-      sgst,
-      igst,
-      total,
-      payment_status: status,
-      gst_billing: gstBillingVal
-    };
-    
-    if (id) {
-      const idx = state.purchases.findIndex(p => p.id === id);
-      if (idx !== -1) {
-        state.purchases[idx] = purchaseData;
+    const purchaseDataArray = currentPurchaseItems.map(item => {
+      const taxable = item.quantity * item.rate;
+      const gstRateVal = gstTreatment === "without" ? 0 : item.gst_rate;
+      
+      let cgst = 0, sgst = 0, igst = 0;
+      if (isLocal) {
+        cgst = taxable * (gstRateVal / 2) / 100;
+        sgst = taxable * (gstRateVal / 2) / 100;
+      } else {
+        igst = taxable * gstRateVal / 100;
       }
-    } else {
-      state.purchases.push(purchaseData);
-    }
+      const gstAmount = cgst + sgst + igst;
+      const total = taxable + gstAmount;
+      
+      return {
+        id,
+        date,
+        vendor,
+        product: item.product,
+        quantity: item.quantity,
+        rate: item.rate,
+        taxable_value: taxable,
+        gst_rate: gstRateVal,
+        cgst,
+        sgst,
+        igst,
+        total,
+        payment_status: status,
+        gst_billing: gstBillingVal
+      };
+    });
+    
+    state.purchases = state.purchases.filter(p => p.id !== id);
+    state.purchases.push(...purchaseDataArray);
     
     saveStateLocal();
     closeModal("modal-purchase");
     
     if (state.settings.syncEnabled) {
-      await postToGoogleSheet("addPurchase", purchaseData);
+      await postToGoogleSheet("addPurchase", purchaseDataArray);
     }
     
     recalculateAndRender();
   });
-  
+
   // 5. Log Sale
   const saleQty = document.getElementById("sale-form-qty");
   const saleCostRate = document.getElementById("sale-form-costrate");
@@ -1655,80 +1633,20 @@ function setupFormHandlers() {
   const saleTotal = document.getElementById("sale-form-total");
   const saleGst = document.getElementById("sale-form-gst");
   const saleWarning = document.getElementById("sale-stock-warning");
-  
-  const updateSaleTotal = () => {
-    const qty = parseFloat(saleQty.value) || 0;
-    const rate = parseFloat(saleSellRate.value) || 0;
-    
-    const gstTreatment = document.getElementById("sale-form-gst-treatment").value;
-    let gstRateVal = 0;
-    if (gstTreatment === "without") {
-      saleGstRate.disabled = true;
-      saleGstRate.value = "0";
-    } else {
-      saleGstRate.disabled = false;
-      gstRateVal = parseFloat(saleGstRate.value) || 0;
-    }
-    
-    const taxable = qty * rate;
-    document.getElementById("sale-calc-taxable").textContent = "₹" + taxable.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    
-    const custName = document.getElementById("sale-form-cust").value;
-    const cust = state.customers.find(c => c.name === custName);
-    const stateName = cust ? (cust.state || "Telangana") : "Telangana";
-    const isLocal = stateName.toLowerCase() === "telangana";
-    
-    let cgst = 0, sgst = 0, igst = 0;
-    if (isLocal) {
-      cgst = taxable * (gstRateVal / 2) / 100;
-      sgst = taxable * (gstRateVal / 2) / 100;
-      document.getElementById("sale-calc-cgst-row").style.display = "flex";
-      document.getElementById("sale-calc-sgst-row").style.display = "flex";
-      document.getElementById("sale-calc-igst-row").style.display = "none";
-    } else {
-      igst = taxable * gstRateVal / 100;
-      document.getElementById("sale-calc-cgst-row").style.display = "none";
-      document.getElementById("sale-calc-sgst-row").style.display = "none";
-      document.getElementById("sale-calc-igst-row").style.display = "flex";
-    }
-    
-    const gstAmount = cgst + sgst + igst;
-    const total = taxable + gstAmount;
-    
-    document.getElementById("sale-calc-cgst").textContent = "₹" + cgst.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    document.getElementById("sale-calc-sgst").textContent = "₹" + sgst.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    document.getElementById("sale-calc-igst").textContent = "₹" + igst.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    document.getElementById("sale-calc-total-display").textContent = "₹" + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-    
-    // Set hidden inputs for old serialization compatibility
-    saleTotal.value = total.toFixed(2);
-    saleGst.value = gstAmount.toFixed(2);
-    
-    const pName = document.getElementById("sale-form-product").value;
-    const p = state.products.find(prod => prod.name === pName);
-    if (p && qty > p.stock) {
-      saleWarning.classList.remove("hidden");
-      document.getElementById("sale-stock-warning-text").textContent = `Warning: Insufficient stock. Available: ${p.stock.toFixed(1)} ${p.unit}.`;
-    } else {
-      saleWarning.classList.add("hidden");
-    }
-  };
-  
-  saleQty.addEventListener("input", updateSaleTotal);
-  saleSellRate.addEventListener("input", updateSaleTotal);
-  saleGstRate.addEventListener("change", updateSaleTotal);
-  document.getElementById("sale-form-gst-treatment").addEventListener("change", updateSaleTotal);
+
+  document.getElementById("sale-form-gst-treatment").addEventListener("change", () => {
+    updateSaleTotals();
+  });
   
   // Product change handler to prefill HSN, Sell rate, Cost rate and GST rate
   document.getElementById("sale-form-product").addEventListener("change", (e) => {
     const pName = e.target.value;
     const p = state.products.find(prod => prod.name === pName);
     if (p) {
-      saleCostRate.value = p.cost_price || 0;
-      saleSellRate.value = p.sell_price || 0;
+      document.getElementById("sale-form-costrate").value = p.cost_price || 0;
+      document.getElementById("sale-form-sellrate").value = p.sell_price || 0;
       document.getElementById("sale-form-hsn").value = p.hsn || "";
-      saleGstRate.value = p.gst_rate !== undefined ? p.gst_rate : "18";
-      updateSaleTotal();
+      document.getElementById("sale-form-gst-rate").value = p.gst_rate !== undefined ? p.gst_rate : "18";
     }
   });
   
@@ -1754,76 +1672,83 @@ function setupFormHandlers() {
     } else {
       infoBox.classList.add("hidden");
     }
-    updateSaleTotal();
+    updateSaleTotals();
   });
   
   document.getElementById("form-sale").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const id = document.getElementById("sale-form-id").value;
+    
+    if (currentSaleItems.length === 0) {
+      alert("Please add at least one product item.");
+      return;
+    }
+    
+    let id = document.getElementById("sale-form-id").value;
+    if (!id) {
+      const distinctSaleInvoices = new Set(state.sales.map(s => s.id));
+      const saleInvoiceNum = distinctSaleInvoices.size + 1;
+      id = "SLS-NEW-" + String(saleInvoiceNum).padStart(3, '0');
+    }
+    
     const date = document.getElementById("sale-form-date").value;
     const customer = document.getElementById("sale-form-cust").value;
-    const product = document.getElementById("sale-form-product").value;
-    const qty = parseFloat(saleQty.value) || 0;
-    const cost_rate = parseFloat(saleCostRate.value) || 0;
-    const rate = parseFloat(saleSellRate.value) || 0;
-    const gstRateVal = parseFloat(saleGstRate.value) || 0;
-    const taxable = qty * rate;
+    const status = document.getElementById("sale-form-status").value;
+    const gstTreatment = document.getElementById("sale-form-gst-treatment").value;
+    const gstBillingVal = gstTreatment === "without" ? "Without GST" : "With GST";
     
     const customerObj = state.customers.find(c => c.name === customer);
     const stateName = customerObj ? (customerObj.state || "Telangana") : "Telangana";
     const isLocal = stateName.toLowerCase() === "telangana";
     
-    let cgst = 0, sgst = 0, igst = 0;
-    if (isLocal) {
-      cgst = taxable * (gstRateVal / 2) / 100;
-      sgst = taxable * (gstRateVal / 2) / 100;
-    } else {
-      igst = taxable * gstRateVal / 100;
-    }
-    const gstAmount = cgst + sgst + igst;
-    const total = taxable + gstAmount;
-    const status = document.getElementById("sale-form-status").value;
-    const gstTreatment = document.getElementById("sale-form-gst-treatment").value;
-    const gstBillingVal = gstTreatment === "without" ? "Without GST" : "With GST";
-    
-    const saleData = {
-      id: id || "SLS-NEW-" + String(state.sales.length + 1).padStart(3, '0'),
-      date,
-      customer,
-      product,
-      quantity: qty,
-      cost_rate,
-      cost_total: qty * cost_rate,
-      rate,
-      taxable_value: taxable,
-      gst_rate: gstRateVal,
-      cgst,
-      sgst,
-      igst,
-      total,
-      payment_status: status,
-      gst_billing: gstBillingVal
-    };
-    
-    if (id) {
-      const idx = state.sales.findIndex(s => s.id === id);
-      if (idx !== -1) {
-        state.sales[idx] = saleData;
+    const saleDataArray = currentSaleItems.map(item => {
+      const taxable = item.quantity * item.rate;
+      const gstRateVal = gstTreatment === "without" ? 0 : item.gst_rate;
+      
+      let cgst = 0, sgst = 0, igst = 0;
+      if (isLocal) {
+        cgst = taxable * (gstRateVal / 2) / 100;
+        sgst = taxable * (gstRateVal / 2) / 100;
+      } else {
+        igst = taxable * gstRateVal / 100;
       }
-    } else {
-      state.sales.push(saleData);
-    }
+      const gstAmount = cgst + sgst + igst;
+      const total = taxable + gstAmount;
+      const costRate = parseFloat(item.cost_rate) || 0;
+      const costTotal = item.quantity * costRate;
+      
+      return {
+        id,
+        date,
+        customer,
+        product: item.product,
+        quantity: item.quantity,
+        cost_rate: costRate,
+        cost_total: costTotal,
+        rate: item.rate,
+        taxable_value: taxable,
+        gst_rate: gstRateVal,
+        cgst,
+        sgst,
+        igst,
+        total,
+        payment_status: status,
+        gst_billing: gstBillingVal
+      };
+    });
+    
+    state.sales = state.sales.filter(s => s.id !== id);
+    state.sales.push(...saleDataArray);
     
     saveStateLocal();
     closeModal("modal-sale");
     
     if (state.settings.syncEnabled) {
-      await postToGoogleSheet("addSale", saleData);
+      await postToGoogleSheet("addSale", saleDataArray);
     }
     
     recalculateAndRender();
   });
-  
+
   // 6. Record Payment
   document.getElementById("pmt-form-type").addEventListener("change", updatePaymentPartyDropdown);
   document.getElementById("pmt-form-party").addEventListener("change", (e) => {
@@ -2021,8 +1946,10 @@ function editCustomer(customerId) {
 }
 
 function editPurchase(purchaseId) {
-  const p = state.purchases.find(pur => pur.id === purchaseId);
-  if (!p) return;
+  const matchingItems = state.purchases.filter(pur => pur.id === purchaseId);
+  if (matchingItems.length === 0) return;
+  
+  const p = matchingItems[0];
   
   openModal("modal-purchase");
   document.getElementById("modal-purchase-title").textContent = "Edit Purchase Details";
@@ -2030,14 +1957,21 @@ function editPurchase(purchaseId) {
   document.getElementById("pur-form-date").value = p.date;
   document.getElementById("pur-form-vendor").value = p.vendor;
   document.getElementById("pur-form-gst-treatment").value = p.gst_billing === "Without GST" ? "without" : "with";
-  document.getElementById("pur-form-product").value = p.product;
-  document.getElementById("pur-form-qty").value = p.quantity;
-  document.getElementById("pur-form-rate").value = p.rate;
   
-  const prod = state.products.find(prod => prod.name === p.product);
-  document.getElementById("pur-form-hsn").value = prod ? (prod.hsn || "") : "";
-  document.getElementById("pur-form-gst-rate").value = p.gst_rate !== undefined ? p.gst_rate : "18";
+  document.getElementById("pur-form-product").value = "";
+  document.getElementById("pur-form-qty").value = "0";
+  document.getElementById("pur-form-rate").value = "0";
+  document.getElementById("pur-form-hsn").value = "";
+  document.getElementById("pur-form-gst-rate").value = "18";
   document.getElementById("pur-form-status").value = p.payment_status;
+  
+  currentPurchaseItems = matchingItems.map(item => ({
+    product: item.product,
+    quantity: item.quantity,
+    rate: item.rate,
+    hsn: state.products.find(prod => prod.name === item.product)?.hsn || "",
+    gst_rate: item.gst_rate !== undefined ? item.gst_rate : 18
+  }));
   
   const v = state.vendors.find(vend => vend.name === p.vendor);
   const infoBox = document.getElementById("pur-gst-info");
@@ -2059,12 +1993,15 @@ function editPurchase(purchaseId) {
     infoBox.classList.add("hidden");
   }
   
-  updatePurchaseTotal();
+  renderPurchaseItemsTable();
+  updatePurchaseTotals();
 }
 
 function editSale(saleId) {
-  const s = state.sales.find(sal => sal.id === saleId);
-  if (!s) return;
+  const matchingItems = state.sales.filter(sal => sal.id === saleId);
+  if (matchingItems.length === 0) return;
+  
+  const s = matchingItems[0];
   
   openModal("modal-sale");
   document.getElementById("modal-sale-title").textContent = "Edit Sale Details";
@@ -2072,15 +2009,23 @@ function editSale(saleId) {
   document.getElementById("sale-form-date").value = s.date;
   document.getElementById("sale-form-cust").value = s.customer;
   document.getElementById("sale-form-gst-treatment").value = s.gst_billing === "Without GST" ? "without" : "with";
-  document.getElementById("sale-form-product").value = s.product;
-  document.getElementById("sale-form-qty").value = s.quantity;
-  document.getElementById("sale-form-costrate").value = s.cost_rate;
-  document.getElementById("sale-form-sellrate").value = s.rate;
   
-  const prod = state.products.find(prod => prod.name === s.product);
-  document.getElementById("sale-form-hsn").value = prod ? (prod.hsn || "") : "";
-  document.getElementById("sale-form-gst-rate").value = s.gst_rate !== undefined ? s.gst_rate : "18";
+  document.getElementById("sale-form-product").value = "";
+  document.getElementById("sale-form-qty").value = "0";
+  document.getElementById("sale-form-sellrate").value = "0";
+  document.getElementById("sale-form-costrate").value = "0";
+  document.getElementById("sale-form-hsn").value = "";
+  document.getElementById("sale-form-gst-rate").value = "18";
   document.getElementById("sale-form-status").value = s.payment_status;
+  
+  currentSaleItems = matchingItems.map(item => ({
+    product: item.product,
+    quantity: item.quantity,
+    rate: item.rate,
+    cost_rate: item.cost_rate !== undefined ? item.cost_rate : 0,
+    hsn: state.products.find(prod => prod.name === item.product)?.hsn || "",
+    gst_rate: item.gst_rate !== undefined ? item.gst_rate : 18
+  }));
   
   const c = state.customers.find(cust => cust.name === s.customer);
   const infoBox = document.getElementById("sale-gst-info");
@@ -2102,7 +2047,8 @@ function editSale(saleId) {
     infoBox.classList.add("hidden");
   }
   
-  updateSaleTotal();
+  renderSaleItemsTable();
+  updateSaleTotals();
 }
 
 // ================= GOOGLE SHEETS HTTP SYNC ENGINE =================
@@ -2162,4 +2108,395 @@ async function postToGoogleSheet(action, data) {
     alert("Error syncing transaction to Google Sheets. Check settings and internet connection.");
     return null;
   }
+}
+
+
+// ================= MULTI-PRODUCT LOGIC & HELPERS =================
+
+window.deleteSaleItem = function(idx) {
+  currentSaleItems.splice(idx, 1);
+  renderSaleItemsTable();
+  updateSaleTotals();
+};
+
+window.deletePurchaseItem = function(idx) {
+  currentPurchaseItems.splice(idx, 1);
+  renderPurchaseItemsTable();
+  updatePurchaseTotals();
+};
+
+function renderSaleItemsTable() {
+  const tbody = document.getElementById("sale-items-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  
+  const gstTreatment = document.getElementById("sale-form-gst-treatment").value;
+  
+  currentSaleItems.forEach((item, idx) => {
+    const taxable = item.quantity * item.rate;
+    const gstRate = gstTreatment === "without" ? 0 : item.gst_rate;
+    const gstAmount = taxable * gstRate / 100;
+    const total = taxable + gstAmount;
+    
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="padding: 6px 12px; border-bottom: 1px solid var(--border-color);">${item.product}</td>
+      <td style="padding: 6px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">${item.quantity}</td>
+      <td style="padding: 6px 12px; text-align: right; border-bottom: 1px solid var(--border-color);">₹${item.rate.toFixed(2)}</td>
+      <td style="padding: 6px 12px; text-align: right; border-bottom: 1px solid var(--border-color);">₹${taxable.toFixed(2)}</td>
+      <td style="padding: 6px 12px; text-align: right; border-bottom: 1px solid var(--border-color);">${gstRate}% (₹${gstAmount.toFixed(2)})</td>
+      <td style="padding: 6px 12px; text-align: right; font-weight: bold; border-bottom: 1px solid var(--border-color);">₹${total.toFixed(2)}</td>
+      <td style="padding: 6px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
+        <button type="button" class="btn btn-sm btn-outline" style="color: var(--accent-orange); border-color: var(--accent-orange); padding: 2px 6px;" onclick="deleteSaleItem(${idx})">&times;</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderPurchaseItemsTable() {
+  const tbody = document.getElementById("purchase-items-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+  
+  const gstTreatment = document.getElementById("pur-form-gst-treatment").value;
+  
+  currentPurchaseItems.forEach((item, idx) => {
+    const taxable = item.quantity * item.rate;
+    const gstRate = gstTreatment === "without" ? 0 : item.gst_rate;
+    const gstAmount = taxable * gstRate / 100;
+    const total = taxable + gstAmount;
+    
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="padding: 6px 12px; border-bottom: 1px solid var(--border-color);">${item.product}</td>
+      <td style="padding: 6px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">${item.quantity}</td>
+      <td style="padding: 6px 12px; text-align: right; border-bottom: 1px solid var(--border-color);">₹${item.rate.toFixed(2)}</td>
+      <td style="padding: 6px 12px; text-align: right; border-bottom: 1px solid var(--border-color);">₹${taxable.toFixed(2)}</td>
+      <td style="padding: 6px 12px; text-align: right; border-bottom: 1px solid var(--border-color);">${gstRate}% (₹${gstAmount.toFixed(2)})</td>
+      <td style="padding: 6px 12px; text-align: right; font-weight: bold; border-bottom: 1px solid var(--border-color);">₹${total.toFixed(2)}</td>
+      <td style="padding: 6px 12px; text-align: center; border-bottom: 1px solid var(--border-color);">
+        <button type="button" class="btn btn-sm btn-outline" style="color: var(--accent-orange); border-color: var(--accent-orange); padding: 2px 6px;" onclick="deletePurchaseItem(${idx})">&times;</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateSaleTotals() {
+  const custName = document.getElementById("sale-form-cust").value;
+  const cust = state.customers.find(c => c.name === custName);
+  const stateName = cust ? (cust.state || "Telangana") : "Telangana";
+  const isLocal = stateName.toLowerCase() === "telangana";
+  const gstTreatment = document.getElementById("sale-form-gst-treatment").value;
+  
+  let totalTaxable = 0;
+  let totalCGST = 0;
+  let totalSGST = 0;
+  let totalIGST = 0;
+  
+  currentSaleItems.forEach(item => {
+    const taxable = item.quantity * item.rate;
+    const gstRateVal = gstTreatment === "without" ? 0 : item.gst_rate;
+    
+    totalTaxable += taxable;
+    if (isLocal) {
+      totalCGST += taxable * (gstRateVal / 2) / 100;
+      totalSGST += taxable * (gstRateVal / 2) / 100;
+    } else {
+      totalIGST += taxable * gstRateVal / 100;
+    }
+  });
+  
+  const totalGST = totalCGST + totalSGST + totalIGST;
+  const grandTotal = totalTaxable + totalGST;
+  
+  document.getElementById("sale-calc-taxable").textContent = "₹" + totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  
+  if (isLocal) {
+    document.getElementById("sale-calc-cgst-row").style.display = "flex";
+    document.getElementById("sale-calc-sgst-row").style.display = "flex";
+    document.getElementById("sale-calc-igst-row").style.display = "none";
+  } else {
+    document.getElementById("sale-calc-cgst-row").style.display = "none";
+    document.getElementById("sale-calc-sgst-row").style.display = "none";
+    document.getElementById("sale-calc-igst-row").style.display = "flex";
+  }
+  
+  document.getElementById("sale-calc-cgst").textContent = "₹" + totalCGST.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  document.getElementById("sale-calc-sgst").textContent = "₹" + totalSGST.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  document.getElementById("sale-calc-igst").textContent = "₹" + totalIGST.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  document.getElementById("sale-calc-total-display").textContent = "₹" + grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  
+  // Set hidden compatibility inputs
+  document.getElementById("sale-form-total").value = grandTotal.toFixed(2);
+  document.getElementById("sale-form-gst").value = totalGST.toFixed(2);
+  
+  // Check for low stock warning
+  const warnings = [];
+  currentSaleItems.forEach(item => {
+    const p = state.products.find(prod => prod.name === item.product);
+    if (p && item.quantity > p.stock) {
+      warnings.push(`${item.product} (Available: ${p.stock.toFixed(1)} ${p.unit}, Requested: ${item.quantity.toFixed(1)})`);
+    }
+  });
+  
+  const saleWarning = document.getElementById("sale-stock-warning");
+  if (saleWarning) {
+    if (warnings.length > 0) {
+      saleWarning.classList.remove("hidden");
+      document.getElementById("sale-stock-warning-text").innerHTML = 
+        "Warning: Insufficient stock for: " + warnings.join(", ");
+    } else {
+      saleWarning.classList.add("hidden");
+    }
+  }
+}
+
+function updatePurchaseTotals() {
+  const vendorName = document.getElementById("pur-form-vendor").value;
+  const vendor = state.vendors.find(v => v.name === vendorName);
+  const stateName = vendor ? (vendor.state || "Telangana") : "Telangana";
+  const isLocal = stateName.toLowerCase() === "telangana";
+  const gstTreatment = document.getElementById("pur-form-gst-treatment").value;
+  
+  let totalTaxable = 0;
+  let totalCGST = 0;
+  let totalSGST = 0;
+  let totalIGST = 0;
+  
+  currentPurchaseItems.forEach(item => {
+    const taxable = item.quantity * item.rate;
+    const gstRateVal = gstTreatment === "without" ? 0 : item.gst_rate;
+    
+    totalTaxable += taxable;
+    if (isLocal) {
+      totalCGST += taxable * (gstRateVal / 2) / 100;
+      totalSGST += taxable * (gstRateVal / 2) / 100;
+    } else {
+      totalIGST += taxable * gstRateVal / 100;
+    }
+  });
+  
+  const totalGST = totalCGST + totalSGST + totalIGST;
+  const grandTotal = totalTaxable + totalGST;
+  
+  document.getElementById("pur-calc-taxable").textContent = "₹" + totalTaxable.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  
+  if (isLocal) {
+    document.getElementById("pur-calc-cgst-row").style.display = "flex";
+    document.getElementById("pur-calc-sgst-row").style.display = "flex";
+    document.getElementById("pur-calc-igst-row").style.display = "none";
+  } else {
+    document.getElementById("pur-calc-cgst-row").style.display = "none";
+    document.getElementById("pur-calc-sgst-row").style.display = "none";
+    document.getElementById("pur-calc-igst-row").style.display = "flex";
+  }
+  
+  document.getElementById("pur-calc-cgst").textContent = "₹" + totalCGST.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  document.getElementById("pur-calc-sgst").textContent = "₹" + totalSGST.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  document.getElementById("pur-calc-igst").textContent = "₹" + totalIGST.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  document.getElementById("pur-calc-total-display").textContent = "₹" + grandTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  
+  // Set hidden compatibility inputs
+  document.getElementById("pur-form-total").value = grandTotal.toFixed(2);
+  document.getElementById("pur-form-gst").value = totalGST.toFixed(2);
+}
+
+function addSaleItem() {
+  const prodName = document.getElementById("sale-form-product").value;
+  const qty = parseFloat(document.getElementById("sale-form-qty").value) || 0;
+  const sellRate = parseFloat(document.getElementById("sale-form-sellrate").value) || 0;
+  const costRate = parseFloat(document.getElementById("sale-form-costrate").value) || 0;
+  const hsn = document.getElementById("sale-form-hsn").value;
+  const gstRate = parseFloat(document.getElementById("sale-form-gst-rate").value) || 0;
+
+  if (!prodName) {
+    alert("Please select a product.");
+    return;
+  }
+  if (qty <= 0) {
+    alert("Quantity must be greater than 0.");
+    return;
+  }
+  if (sellRate < 0) {
+    alert("Sell price cannot be negative.");
+    return;
+  }
+
+  const item = {
+    product: prodName,
+    quantity: qty,
+    rate: sellRate,
+    cost_rate: costRate,
+    hsn: hsn,
+    gst_rate: gstRate
+  };
+
+  const existingIdx = currentSaleItems.findIndex(i => i.product === prodName);
+  if (existingIdx !== -1) {
+    currentSaleItems[existingIdx].quantity += qty;
+    currentSaleItems[existingIdx].rate = sellRate;
+    currentSaleItems[existingIdx].cost_rate = costRate;
+  } else {
+    currentSaleItems.push(item);
+  }
+
+  // Clear inputs
+  document.getElementById("sale-form-product").value = "";
+  document.getElementById("sale-form-qty").value = "0";
+  document.getElementById("sale-form-sellrate").value = "0";
+  document.getElementById("sale-form-costrate").value = "0";
+  document.getElementById("sale-form-hsn").value = "";
+  document.getElementById("sale-form-gst-rate").value = "18";
+
+  renderSaleItemsTable();
+  updateSaleTotals();
+}
+
+function addPurchaseItem() {
+  const prodName = document.getElementById("pur-form-product").value;
+  const qty = parseFloat(document.getElementById("pur-form-qty").value) || 0;
+  const rate = parseFloat(document.getElementById("pur-form-rate").value) || 0;
+  const hsn = document.getElementById("pur-form-hsn").value;
+  const gstRate = parseFloat(document.getElementById("pur-form-gst-rate").value) || 0;
+
+  if (!prodName) {
+    alert("Please select a product.");
+    return;
+  }
+  if (qty <= 0) {
+    alert("Quantity must be greater than 0.");
+    return;
+  }
+  if (rate < 0) {
+    alert("Price cannot be negative.");
+    return;
+  }
+
+  const item = {
+    product: prodName,
+    quantity: qty,
+    rate: rate,
+    hsn: hsn,
+    gst_rate: gstRate
+  };
+
+  const existingIdx = currentPurchaseItems.findIndex(i => i.product === prodName);
+  if (existingIdx !== -1) {
+    currentPurchaseItems[existingIdx].quantity += qty;
+    currentPurchaseItems[existingIdx].rate = rate;
+  } else {
+    currentPurchaseItems.push(item);
+  }
+
+  // Clear inputs
+  document.getElementById("pur-form-product").value = "";
+  document.getElementById("pur-form-qty").value = "0";
+  document.getElementById("pur-form-rate").value = "0";
+  document.getElementById("pur-form-hsn").value = "";
+  document.getElementById("pur-form-gst-rate").value = "18";
+
+  renderPurchaseItemsTable();
+  updatePurchaseTotals();
+}
+
+// Group helpers
+function groupSales(salesList) {
+  const grouped = {};
+  salesList.forEach(s => {
+    if (!grouped[s.id]) {
+      grouped[s.id] = {
+        id: s.id,
+        date: s.date,
+        customer: s.customer,
+        payment_status: s.payment_status,
+        gst_billing: s.gst_billing,
+        items: [],
+        quantity: 0,
+        cost_total: 0,
+        taxable_value: 0,
+        cgst: 0,
+        sgst: 0,
+        igst: 0,
+        total: 0,
+        products: [],
+        rates: [],
+        costRates: [],
+        gst_rates: []
+      };
+    }
+    const g = grouped[s.id];
+    g.items.push(s);
+    g.quantity += parseFloat(s.quantity) || 0;
+    g.cost_total += parseFloat(s.cost_total) || 0;
+    g.taxable_value += parseFloat(s.taxable_value) || 0;
+    g.cgst += parseFloat(s.cgst) || 0;
+    g.sgst += parseFloat(s.sgst) || 0;
+    g.igst += parseFloat(s.igst) || 0;
+    g.total += parseFloat(s.total) || 0;
+    
+    if (!g.products.includes(s.product)) {
+      g.products.push(s.product);
+    }
+    const r = parseFloat(s.rate) || 0;
+    if (!g.rates.includes(r)) {
+      g.rates.push(r);
+    }
+    const cr = parseFloat(s.cost_rate) || 0;
+    if (!g.costRates.includes(cr)) {
+      g.costRates.push(cr);
+    }
+    const gr = parseFloat(s.gst_rate) || 0;
+    if (!g.gst_rates.includes(gr)) {
+      g.gst_rates.push(gr);
+    }
+  });
+  return Object.values(grouped);
+}
+
+function groupPurchases(purchasesList) {
+  const grouped = {};
+  purchasesList.forEach(p => {
+    if (!grouped[p.id]) {
+      grouped[p.id] = {
+        id: p.id,
+        date: p.date,
+        vendor: p.vendor,
+        payment_status: p.payment_status,
+        gst_billing: p.gst_billing,
+        items: [],
+        quantity: 0,
+        taxable_value: 0,
+        cgst: 0,
+        sgst: 0,
+        igst: 0,
+        total: 0,
+        products: [],
+        rates: [],
+        gst_rates: []
+      };
+    }
+    const g = grouped[p.id];
+    g.items.push(p);
+    g.quantity += parseFloat(p.quantity) || 0;
+    g.taxable_value += parseFloat(p.taxable_value) || 0;
+    g.cgst += parseFloat(p.cgst) || 0;
+    g.sgst += parseFloat(p.sgst) || 0;
+    g.igst += parseFloat(p.igst) || 0;
+    g.total += parseFloat(p.total) || 0;
+    
+    if (!g.products.includes(p.product)) {
+      g.products.push(p.product);
+    }
+    const r = parseFloat(p.rate) || 0;
+    if (!g.rates.includes(r)) {
+      g.rates.push(r);
+    }
+    const gr = parseFloat(p.gst_rate) || 0;
+    if (!g.gst_rates.includes(gr)) {
+      g.gst_rates.push(gr);
+    }
+  });
+  return Object.values(grouped);
 }
