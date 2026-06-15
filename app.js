@@ -429,11 +429,11 @@ function renderPurchasesTable() {
     const editButton = `<button class="btn btn-sm btn-outline" onclick="editPurchase('${p.id}')">Edit</button>`;
     const actionCell = `<div style="display: flex; gap: 6px;">${payButton}${editButton}</div>`;
       
-    const taxable = p.taxable_value !== undefined ? p.taxable_value : (p.quantity * p.rate);
+    const taxable = parseFloat(p.taxable_value) || (p.quantity * p.rate) || 0;
     const gstRateVal = p.gst_rate !== undefined ? `${p.gst_rate}%` : '-';
-    const cgstVal = p.cgst || 0;
-    const sgstVal = p.sgst || 0;
-    const igstVal = p.igst || 0;
+    const cgstVal = parseFloat(p.cgst) || 0;
+    const sgstVal = parseFloat(p.sgst) || 0;
+    const igstVal = parseFloat(p.igst) || 0;
     const gstBilling = p.gst_billing || "With GST";
 
     const tr = document.createElement("tr");
@@ -476,7 +476,9 @@ function renderSalesTable() {
     if (fromDate && new Date(s.date) < new Date(fromDate)) return;
     if (toDate && new Date(s.date) > new Date(toDate)) return;
     
-    const profit = s.total - s.cost_total;
+    const costRate = parseFloat(s.cost_rate) || 0;
+    const costTotal = parseFloat(s.cost_total) || (s.quantity * costRate) || 0;
+    const profit = (parseFloat(s.total) || 0) - costTotal;
     const isLoss = profit < 0;
     
     const badgeClass = s.payment_status === "Clear" ? "badge-paid" : "badge-pending";
@@ -486,11 +488,11 @@ function renderSalesTable() {
     const editButton = `<button class="btn btn-sm btn-outline" onclick="editSale('${s.id}')">Edit</button>`;
     const actionCell = `<div style="display: flex; gap: 6px;">${payButton}${editButton}</div>`;
       
-    const taxable = s.taxable_value !== undefined ? s.taxable_value : (s.quantity * s.rate);
+    const taxable = parseFloat(s.taxable_value) || (s.quantity * s.rate) || 0;
     const gstRateVal = s.gst_rate !== undefined ? `${s.gst_rate}%` : '-';
-    const cgstVal = s.cgst || 0;
-    const sgstVal = s.sgst || 0;
-    const igstVal = s.igst || 0;
+    const cgstVal = parseFloat(s.cgst) || 0;
+    const sgstVal = parseFloat(s.sgst) || 0;
+    const igstVal = parseFloat(s.igst) || 0;
     const gstBilling = s.gst_billing || "With GST";
 
     const tr = document.createElement("tr");
@@ -500,7 +502,7 @@ function renderSalesTable() {
       <td class="font-weight-bold">${s.customer}</td>
       <td>${s.product}</td>
       <td>${s.quantity}</td>
-      <td>₹${s.cost_rate.toFixed(2)}</td>
+      <td>₹${costRate.toFixed(2)}</td>
       <td>₹${s.rate.toFixed(2)}</td>
       <td>₹${taxable.toFixed(2)}</td>
       <td>${gstBilling}</td>
@@ -576,11 +578,15 @@ function renderRecentTransactions() {
     tbody.appendChild(tr);
   });
   
-  let totalSalesVal = state.sales.reduce((sum, s) => sum + s.total, 0);
-  let totalPurVal = state.purchases.reduce((sum, p) => p.vendor.toLowerCase() !== 'opening stock' ? sum + p.total : sum, 0);
-  let inventoryVal = state.products.reduce((sum, p) => sum + (p.stock * p.cost_price), 0);
+  let totalSalesVal = state.sales.reduce((sum, s) => sum + (parseFloat(s.total) || 0), 0);
+  let totalPurVal = state.purchases.reduce((sum, p) => p.vendor.toLowerCase() !== 'opening stock' ? sum + (parseFloat(p.total) || 0) : sum, 0);
+  let inventoryVal = state.products.reduce((sum, p) => sum + ((parseFloat(p.stock) || 0) * (parseFloat(p.cost_price) || 0)), 0);
   
-  let salesProfit = state.sales.reduce((sum, s) => sum + (s.total - s.cost_total), 0);
+  let salesProfit = state.sales.reduce((sum, s) => {
+    const costRate = parseFloat(s.cost_rate) || 0;
+    const costTotal = parseFloat(s.cost_total) || (s.quantity * costRate) || 0;
+    return sum + ((parseFloat(s.total) || 0) - costTotal);
+  }, 0);
   let otherExpenses = getGeneralExpensesSum();
   let netProfit = salesProfit - otherExpenses;
   
@@ -1224,9 +1230,9 @@ function setupFormHandlers() {
     const unit = document.getElementById("prod-form-unit").value;
     const hsn = document.getElementById("prod-form-hsn").value;
     const gst_rate = parseFloat(document.getElementById("prod-form-gst-rate").value) || 0;
-    const reorder = parseFloat(document.getElementById("prod-form-reorder").value);
-    const cost = parseFloat(document.getElementById("prod-form-cost").value);
-    const sell = parseFloat(document.getElementById("prod-form-sell").value);
+    const reorder = parseFloat(document.getElementById("prod-form-reorder").value) || 0;
+    const cost = parseFloat(document.getElementById("prod-form-cost").value) || 0;
+    const sell = parseFloat(document.getElementById("prod-form-sell").value) || 0;
     
     const productData = {
       id: id || "PROD-" + String(state.products.length + 1).padStart(3, '0'),
@@ -1475,9 +1481,9 @@ function setupFormHandlers() {
     const date = document.getElementById("pur-form-date").value;
     const vendor = document.getElementById("pur-form-vendor").value;
     const product = document.getElementById("pur-form-product").value;
-    const qty = parseFloat(purQty.value);
-    const rate = parseFloat(purRate.value);
-    const gstRateVal = parseFloat(purGstRate.value);
+    const qty = parseFloat(purQty.value) || 0;
+    const rate = parseFloat(purRate.value) || 0;
+    const gstRateVal = parseFloat(purGstRate.value) || 0;
     const taxable = qty * rate;
     
     const vendorObj = state.vendors.find(v => v.name === vendor);
@@ -1649,10 +1655,10 @@ function setupFormHandlers() {
     const date = document.getElementById("sale-form-date").value;
     const customer = document.getElementById("sale-form-cust").value;
     const product = document.getElementById("sale-form-product").value;
-    const qty = parseFloat(saleQty.value);
-    const cost_rate = parseFloat(saleCostRate.value);
-    const rate = parseFloat(saleSellRate.value);
-    const gstRateVal = parseFloat(saleGstRate.value);
+    const qty = parseFloat(saleQty.value) || 0;
+    const cost_rate = parseFloat(saleCostRate.value) || 0;
+    const rate = parseFloat(saleSellRate.value) || 0;
+    const gstRateVal = parseFloat(saleGstRate.value) || 0;
     const taxable = qty * rate;
     
     const customerObj = state.customers.find(c => c.name === customer);
@@ -1726,7 +1732,7 @@ function setupFormHandlers() {
     const type = document.getElementById("pmt-form-type").value;
     const method = document.getElementById("pmt-form-method").value;
     const party = document.getElementById("pmt-form-party").value;
-    const amount = parseFloat(document.getElementById("pmt-form-amount").value);
+    const amount = parseFloat(document.getElementById("pmt-form-amount").value) || 0;
     const ref = document.getElementById("pmt-form-notes").value;
     const refInvoiceId = document.getElementById("pmt-form-ref-id").value;
     
@@ -2002,12 +2008,12 @@ async function fetchFromGoogleSheet() {
     if (result.status === "success" && result.data) {
       const data = result.data;
       
-      if (data.products && data.products.length > 0) state.products = data.products.map(p => ({ ...p, cost_price: parseFloat(p.cost_price), sell_price: parseFloat(p.sell_price), reorder_level: parseFloat(p.reorder_level), gst_rate: parseFloat(p.gst_rate || 18) }));
+      if (data.products && data.products.length > 0) state.products = data.products.map(p => ({ ...p, cost_price: parseFloat(p.cost_price) || 0, sell_price: parseFloat(p.sell_price) || 0, reorder_level: parseFloat(p.reorder_level) || 0, gst_rate: parseFloat(p.gst_rate || 18) || 0 }));
       if (data.vendors && data.vendors.length > 0) state.vendors = data.vendors;
       if (data.customers && data.customers.length > 0) state.customers = data.customers;
-      if (data.purchases && data.purchases.length > 0) state.purchases = data.purchases.map(p => ({ ...p, quantity: parseFloat(p.quantity), rate: parseFloat(p.rate), taxable_value: parseFloat(p.taxable_value || p.quantity * p.rate), gst_rate: parseFloat(p.gst_rate || 0), cgst: parseFloat(p.cgst || 0), sgst: parseFloat(p.sgst || 0), igst: parseFloat(p.igst || 0), total: parseFloat(p.total), gst_billing: p.gst_billing || "With GST" }));
-      if (data.sales && data.sales.length > 0) state.sales = data.sales.map(s => ({ ...s, quantity: parseFloat(s.quantity), cost_rate: parseFloat(s.cost_rate), cost_total: parseFloat(s.cost_total), rate: parseFloat(s.rate), taxable_value: parseFloat(s.taxable_value || s.quantity * s.rate), gst_rate: parseFloat(s.gst_rate || 0), cgst: parseFloat(s.cgst || 0), sgst: parseFloat(s.sgst || 0), igst: parseFloat(s.igst || 0), total: parseFloat(s.total), gst_billing: s.gst_billing || "With GST" }));
-      if (data.payments && data.payments.length > 0) state.payments = data.payments.map(p => ({ ...p, amount: parseFloat(p.amount) }));
+      if (data.purchases && data.purchases.length > 0) state.purchases = data.purchases.map(p => ({ ...p, quantity: parseFloat(p.quantity) || 0, rate: parseFloat(p.rate) || 0, taxable_value: parseFloat(p.taxable_value || p.quantity * p.rate) || 0, gst_rate: parseFloat(p.gst_rate || 0) || 0, cgst: parseFloat(p.cgst || 0) || 0, sgst: parseFloat(p.sgst || 0) || 0, igst: parseFloat(p.igst || 0) || 0, total: parseFloat(p.total) || 0, gst_billing: p.gst_billing || "With GST" }));
+      if (data.sales && data.sales.length > 0) state.sales = data.sales.map(s => ({ ...s, quantity: parseFloat(s.quantity) || 0, cost_rate: parseFloat(s.cost_rate) || 0, cost_total: parseFloat(s.cost_total) || 0, rate: parseFloat(s.rate) || 0, taxable_value: parseFloat(s.taxable_value || s.quantity * s.rate) || 0, gst_rate: parseFloat(s.gst_rate || 0) || 0, cgst: parseFloat(s.cgst || 0) || 0, sgst: parseFloat(s.sgst || 0) || 0, igst: parseFloat(s.igst || 0) || 0, total: parseFloat(s.total) || 0, gst_billing: s.gst_billing || "With GST" }));
+      if (data.payments && data.payments.length > 0) state.payments = data.payments.map(p => ({ ...p, amount: parseFloat(p.amount) || 0 }));
       
       saveStateLocal();
       console.log("State updated from Google Sheet.");
