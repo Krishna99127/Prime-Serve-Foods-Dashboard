@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- CSS Stylesheet link (Cache Busted v5) -->
-  <link rel="stylesheet" href="styles.css?v=5.0">
+  <!-- CSS Stylesheet link (Cache Busted v5.1) -->
+  <link rel="stylesheet" href="styles.css?v=5.1">
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Lucide Icons CDN -->
@@ -23,8 +23,8 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
       <div class="sidebar-brand">
-        <div class="logo-box">
-          <span class="logo-icon">🏪</span>
+        <div class="logo-box" style="background: none; box-shadow: none; border-radius: 0; display: flex; align-items: center; justify-content: center; width: 42px; height: 42px;">
+          <img src="logo.png?v=5.1" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">
         </div>
         <div class="brand-text">
           <h2>Prime Serve</h2>
@@ -321,6 +321,21 @@
               <select class="filter-select" id="filter-purchases-vendor">
                 <option value="all">All Vendors</option>
               </select>
+              <select class="filter-select" id="filter-purchases-status">
+                <option value="all">All Statuses</option>
+                <option value="Clear">Clear</option>
+                <option value="Pending">Pending</option>
+              </select>
+              <select class="filter-select" id="filter-purchases-gst">
+                <option value="all">All GST Billing</option>
+                <option value="With GST">With GST</option>
+                <option value="Without GST">Without GST</option>
+              </select>
+              <div class="date-range-filter">
+                <input type="date" class="filter-date" id="filter-purchases-from" placeholder="From Date">
+                <span>to</span>
+                <input type="date" class="filter-date" id="filter-purchases-to" placeholder="To Date">
+              </div>
             </div>
             <button class="btn btn-primary" id="log-purchase-btn">
               <i data-lucide="plus"></i> Log Purchase
@@ -362,6 +377,21 @@
               <select class="filter-select" id="filter-sales-customer">
                 <option value="all">All Customers</option>
               </select>
+              <select class="filter-select" id="filter-sales-status">
+                <option value="all">All Statuses</option>
+                <option value="Clear">Clear</option>
+                <option value="Pending">Pending</option>
+              </select>
+              <select class="filter-select" id="filter-sales-gst">
+                <option value="all">All GST Billing</option>
+                <option value="With GST">With GST</option>
+                <option value="Without GST">Without GST</option>
+              </select>
+              <div class="date-range-filter">
+                <input type="date" class="filter-date" id="filter-sales-from" placeholder="From Date">
+                <span>to</span>
+                <input type="date" class="filter-date" id="filter-sales-to" placeholder="To Date">
+              </div>
             </div>
             <button class="btn btn-primary" id="log-sale-btn">
               <i data-lucide="plus"></i> Log Sale
@@ -1244,7 +1274,7 @@
     </div>
   </div>
 
-  <!-- Javascript File link (Cache Busted v5) -->
-  <script src="app.js?v=5.0"></script>
+  <!-- Javascript File link (Cache Busted v5.1) -->
+  <script src="app.js?v=5.1"></script>
 </body>
 </html>

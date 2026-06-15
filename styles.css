@@ -555,6 +555,7 @@ tbody tr:last-child td {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .search-input {
@@ -975,4 +976,38 @@ tbody tr:last-child td {
 }
 .gst-info-box.hidden {
   display: none;
+}
+
+/* Advanced Filter Layout & Date Picker styling */
+.flex-wrap {
+  flex-wrap: wrap;
+}
+.date-range-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+}
+.date-range-filter input[type="date"] {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 13.5px;
+  outline: none;
+}
+.date-range-filter input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.date-range-filter input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+.date-range-filter span {
+  color: var(--text-muted);
+  font-size: 13px;
 }

@@ -407,12 +407,20 @@ function renderPurchasesTable() {
   
   const searchVal = document.getElementById("search-purchases").value.toLowerCase();
   const filterVendor = document.getElementById("filter-purchases-vendor").value;
+  const filterStatus = document.getElementById("filter-purchases-status").value;
+  const filterGst = document.getElementById("filter-purchases-gst").value;
+  const fromDate = document.getElementById("filter-purchases-from").value;
+  const toDate = document.getElementById("filter-purchases-to").value;
   
   const sorted = [...state.purchases].sort((a, b) => new Date(b.date) - new Date(a.date));
   
   sorted.forEach(p => {
     if (searchVal && !p.product.toLowerCase().includes(searchVal) && !p.vendor.toLowerCase().includes(searchVal)) return;
     if (filterVendor !== "all" && p.vendor !== filterVendor) return;
+    if (filterStatus !== "all" && p.payment_status !== filterStatus) return;
+    if (filterGst !== "all" && p.gst_billing !== filterGst) return;
+    if (fromDate && new Date(p.date) < new Date(fromDate)) return;
+    if (toDate && new Date(p.date) > new Date(toDate)) return;
     
     const badgeClass = p.payment_status === "Clear" ? "badge-paid" : "badge-pending";
     const payButton = p.payment_status === "Pending" 
@@ -453,12 +461,20 @@ function renderSalesTable() {
   
   const searchVal = document.getElementById("search-sales").value.toLowerCase();
   const filterCust = document.getElementById("filter-sales-customer").value;
+  const filterStatus = document.getElementById("filter-sales-status").value;
+  const filterGst = document.getElementById("filter-sales-gst").value;
+  const fromDate = document.getElementById("filter-sales-from").value;
+  const toDate = document.getElementById("filter-sales-to").value;
   
   const sorted = [...state.sales].sort((a, b) => new Date(b.date) - new Date(a.date));
   
   sorted.forEach(s => {
     if (searchVal && !s.product.toLowerCase().includes(searchVal) && !s.customer.toLowerCase().includes(searchVal)) return;
     if (filterCust !== "all" && s.customer !== filterCust) return;
+    if (filterStatus !== "all" && s.payment_status !== filterStatus) return;
+    if (filterGst !== "all" && s.gst_billing !== filterGst) return;
+    if (fromDate && new Date(s.date) < new Date(fromDate)) return;
+    if (toDate && new Date(s.date) > new Date(toDate)) return;
     
     const profit = s.total - s.cost_total;
     const isLoss = profit < 0;
@@ -1815,9 +1831,17 @@ function setupFilterHandlers() {
   
   document.getElementById("search-purchases").addEventListener("input", renderPurchasesTable);
   document.getElementById("filter-purchases-vendor").addEventListener("change", renderPurchasesTable);
+  document.getElementById("filter-purchases-status").addEventListener("change", renderPurchasesTable);
+  document.getElementById("filter-purchases-gst").addEventListener("change", renderPurchasesTable);
+  document.getElementById("filter-purchases-from").addEventListener("change", renderPurchasesTable);
+  document.getElementById("filter-purchases-to").addEventListener("change", renderPurchasesTable);
   
   document.getElementById("search-sales").addEventListener("input", renderSalesTable);
   document.getElementById("filter-sales-customer").addEventListener("change", renderSalesTable);
+  document.getElementById("filter-sales-status").addEventListener("change", renderSalesTable);
+  document.getElementById("filter-sales-gst").addEventListener("change", renderSalesTable);
+  document.getElementById("filter-sales-from").addEventListener("change", renderSalesTable);
+  document.getElementById("filter-sales-to").addEventListener("change", renderSalesTable);
   
   document.getElementById("search-payments").addEventListener("input", renderPaymentsTable);
   document.getElementById("filter-payment-type").addEventListener("change", renderPaymentsTable);
