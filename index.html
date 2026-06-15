@@ -174,29 +174,54 @@
             </div>
           </div>
           
-          <!-- Recent Activity Table -->
-          <div class="table-card mt-3">
-            <div class="table-card-header">
-              <h3>Recent Sales & Purchases</h3>
-              <button class="btn btn-sm btn-outline" id="view-all-transactions">View All</button>
+          <!-- Tables Section -->
+          <div class="dashboard-tables-grid">
+            <!-- Recent Activity Table -->
+            <div class="table-card">
+              <div class="table-card-header">
+                <h3>Recent Sales & Purchases</h3>
+                <button class="btn btn-sm btn-outline" id="view-all-transactions">View All</button>
+              </div>
+              <div class="table-responsive">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Product</th>
+                      <th>Party</th>
+                      <th>Qty</th>
+                      <th>Total Value</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="recent-transactions-tbody">
+                    <!-- JS populated -->
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="table-responsive">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Type</th>
-                    <th>Product</th>
-                    <th>Party</th>
-                    <th>Qty</th>
-                    <th>Total Value</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="recent-transactions-tbody">
-                  <!-- JS populated -->
-                </tbody>
-              </table>
+
+            <!-- Live Stock Summary Widget -->
+            <div class="table-card">
+              <div class="table-card-header">
+                <h3>Live Stock Summary</h3>
+                <button class="btn btn-sm btn-outline" onclick="switchTab('products')">View Catalog</button>
+              </div>
+              <div class="table-responsive table-compact">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th>Stock</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="overview-stock-tbody">
+                    <!-- JS populated -->
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>

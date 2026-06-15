@@ -242,6 +242,7 @@ function recalculateAndRender() {
   renderSalesTable();
   renderPaymentsTable();
   renderRecentTransactions();
+  renderOverviewStockTable();
   renderOverviewCharts();
   populateDropdowns();
   updateSyncStatus();
@@ -725,6 +726,35 @@ function renderRecentTransactions() {
   document.getElementById("kpi-net-profit").className = `kpi-value ${netProfit >= 0 ? 'color-green' : 'color-orange'}`;
   document.getElementById("kpi-inventory-value").textContent = `₹${inventoryVal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
   document.getElementById("kpi-payables").textContent = `₹${totalPayable.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+}
+
+function renderOverviewStockTable() {
+  const tbody = document.getElementById("overview-stock-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  // Sort products: Low Stock first, then alphabetically by name
+  const sortedProducts = [...state.products].sort((a, b) => {
+    const aLow = a.stock < a.reorder_level;
+    const bLow = b.stock < b.reorder_level;
+    if (aLow && !bLow) return -1;
+    if (!aLow && bLow) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  sortedProducts.forEach(p => {
+    const isLow = p.stock < p.reorder_level;
+    const badgeClass = isLow ? "badge-low" : "badge-ok";
+    const badgeText = isLow ? "⚠️ Low Stock" : "OK";
+    
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="font-weight-bold">${p.name}</td>
+      <td>${p.stock.toFixed(1)} ${p.unit}</td>
+      <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
 function getVendorOutstanding(vendorName) {
