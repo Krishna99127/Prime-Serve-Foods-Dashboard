@@ -248,6 +248,14 @@
           <div class="tab-actions-header">
             <div class="filter-group">
               <input type="text" placeholder="Search vendors..." class="search-input" id="search-vendors">
+              <select class="filter-select" id="sort-vendors">
+                <option value="name-asc">Vendor Name (A-Z)</option>
+                <option value="name-desc">Vendor Name (Z-A)</option>
+                <option value="outstanding-desc">Outstanding Payable (High to Low)</option>
+                <option value="outstanding-asc">Outstanding Payable (Low to High)</option>
+                <option value="id-asc">ID (A-Z)</option>
+                <option value="id-desc">ID (Z-A)</option>
+              </select>
             </div>
             <button class="btn btn-primary" id="add-vendor-btn">
               <i data-lucide="plus"></i> Add Vendor
@@ -283,6 +291,14 @@
           <div class="tab-actions-header">
             <div class="filter-group">
               <input type="text" placeholder="Search customers..." class="search-input" id="search-customers">
+              <select class="filter-select" id="sort-customers">
+                <option value="name-asc">Customer Name (A-Z)</option>
+                <option value="name-desc">Customer Name (Z-A)</option>
+                <option value="outstanding-desc">Outstanding Receivable (High to Low)</option>
+                <option value="outstanding-asc">Outstanding Receivable (Low to High)</option>
+                <option value="id-asc">ID (A-Z)</option>
+                <option value="id-desc">ID (Z-A)</option>
+              </select>
             </div>
             <button class="btn btn-primary" id="add-customer-btn">
               <i data-lucide="plus"></i> Add Customer
@@ -336,6 +352,16 @@
                 <span>to</span>
                 <input type="date" class="filter-date" id="filter-purchases-to" placeholder="To Date">
               </div>
+              <select class="filter-select" id="sort-purchases">
+                <option value="date-desc">Date (Newest to Oldest)</option>
+                <option value="date-asc">Date (Oldest to Newest)</option>
+                <option value="total-desc">Total Invoice (High to Low)</option>
+                <option value="total-asc">Total Invoice (Low to High)</option>
+                <option value="taxable-desc">Taxable Value (High to Low)</option>
+                <option value="taxable-asc">Taxable Value (Low to High)</option>
+                <option value="vendor-asc">Vendor Name (A-Z)</option>
+                <option value="vendor-desc">Vendor Name (Z-A)</option>
+              </select>
             </div>
             <button class="btn btn-primary" id="log-purchase-btn">
               <i data-lucide="plus"></i> Log Purchase
@@ -392,6 +418,16 @@
                 <span>to</span>
                 <input type="date" class="filter-date" id="filter-sales-to" placeholder="To Date">
               </div>
+              <select class="filter-select" id="sort-sales">
+                <option value="date-desc">Date (Newest to Oldest)</option>
+                <option value="date-asc">Date (Oldest to Newest)</option>
+                <option value="total-desc">Total Invoice (High to Low)</option>
+                <option value="total-asc">Total Invoice (Low to High)</option>
+                <option value="profit-desc">Estimated Profit (High to Low)</option>
+                <option value="profit-asc">Estimated Profit (Low to High)</option>
+                <option value="customer-asc">Customer Name (A-Z)</option>
+                <option value="customer-desc">Customer Name (Z-A)</option>
+              </select>
             </div>
             <button class="btn btn-primary" id="log-sale-btn">
               <i data-lucide="plus"></i> Log Sale
