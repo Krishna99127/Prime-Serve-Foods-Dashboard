@@ -18,7 +18,7 @@ let state = {
   sales: [],
   payments: [],
   settings: {
-    sheetUrl: "https://script.google.com/macros/s/AKfycbw7ztHFjwYQodC_ij_Up3gl8FL5uhr6ZNE5pQZWWFQyTkuEDvePkWzPeqadhxHSOmvxkQ/exec",
+    sheetUrl: "https://script.google.com/macros/s/AKfycbytSl6QwZNxo6LVZwVPPhs0K0Hk1IDmWa2AKl74mxKsaHU8fPZBd_wRYqfmC203StUPdQ/exec",
     syncEnabled: true
   }
 };
