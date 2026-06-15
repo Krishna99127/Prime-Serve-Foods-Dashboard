@@ -26,6 +26,8 @@ let state = {
 // Charts references
 let salesPurchasesChart = null;
 let productShareChart = null;
+let productTrendChart = null;
+let productQtyShareChart = null;
 let currentSaleItems = [];
 let currentPurchaseItems = [];
 
@@ -139,6 +141,20 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (btnAddSaleItem) {
     btnAddSaleItem.addEventListener("click", addSaleItem);
   }
+  // Bind trend select change event listeners
+  const trendProductSel = document.getElementById("trend-product-select");
+  const trendTimeSel = document.getElementById("trend-time-select");
+  if (trendProductSel) {
+    trendProductSel.addEventListener("change", () => {
+      renderOverviewCharts();
+    });
+  }
+  if (trendTimeSel) {
+    trendTimeSel.addEventListener("change", () => {
+      renderOverviewCharts();
+    });
+  }
+
   // Bind form submissions
   setupFormHandlers();
   setupFilterHandlers();
@@ -1117,6 +1133,62 @@ function renderBalanceSheet() {
   document.getElementById("bs-eq-liab-equity").textContent = totalLiabEquity.toLocaleString('en-IN', { maximumFractionDigits: 0 });
 }
 
+// ================= DATE GROUPING & FORMATTING HELPERS =================
+
+function getGroupingKey(dateStr, granularity) {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  
+  if (granularity === "day") {
+    return dateStr; // "yyyy-mm-dd"
+  } else if (granularity === "week") {
+    // Sunday of the week containing d
+    const day = d.getDay();
+    const diff = d.getDate() - day;
+    const sunday = new Date(d.setDate(diff));
+    const year = sunday.getFullYear();
+    const month = String(sunday.getMonth() + 1).padStart(2, '0');
+    const date = String(sunday.getDate()).padStart(2, '0');
+    return `${year}-${month}-${date}`;
+  } else if (granularity === "month") {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`; // "yyyy-mm"
+  } else if (granularity === "year") {
+    return String(d.getFullYear()); // "yyyy"
+  }
+  return dateStr;
+}
+
+function compareKeys(a, b, granularity) {
+  if (granularity === "year") {
+    return parseInt(a) - parseInt(b);
+  }
+  return new Date(a) - new Date(b);
+}
+
+function formatKeyLabel(key, granularity) {
+  if (granularity === "day") {
+    const d = new Date(key);
+    if (isNaN(d.getTime())) return key;
+    const options = { day: 'numeric', month: 'short' };
+    return d.toLocaleDateString('en-US', options);
+  } else if (granularity === "week") {
+    const d = new Date(key);
+    if (isNaN(d.getTime())) return key;
+    const options = { day: 'numeric', month: 'short' };
+    return "W/c " + d.toLocaleDateString('en-US', options);
+  } else if (granularity === "month") {
+    const d = new Date(key + "-02"); // Add day to avoid timezone shift
+    if (isNaN(d.getTime())) return key;
+    const options = { month: 'short', year: 'numeric' };
+    return d.toLocaleDateString('en-US', options);
+  } else if (granularity === "year") {
+    return key;
+  }
+  return key;
+}
+
 // ================= OVERVIEW CHARTS =================
 
 function renderOverviewCharts() {
@@ -1234,6 +1306,133 @@ function renderOverviewCharts() {
       }
     }
   });
+
+  // ================= NEW QUANTITY/PRODUCT COUNT CHARTS =================
+  
+  const trendCtx = document.getElementById("productTrendChart");
+  if (trendCtx) {
+    const selectedProd = document.getElementById("trend-product-select")?.value || "all";
+    const granularity = document.getElementById("trend-time-select")?.value || "month";
+    
+    const salesGroup = {};
+    const purchasesGroup = {};
+    
+    state.sales.forEach(s => {
+      if (selectedProd !== "all" && s.product !== selectedProd) return;
+      const key = getGroupingKey(s.date, granularity);
+      salesGroup[key] = (salesGroup[key] || 0) + (parseFloat(s.quantity) || 0);
+    });
+    
+    state.purchases.forEach(p => {
+      if (selectedProd !== "all" && p.product !== selectedProd) return;
+      const key = getGroupingKey(p.date, granularity);
+      purchasesGroup[key] = (purchasesGroup[key] || 0) + (parseFloat(p.quantity) || 0);
+    });
+    
+    const allKeys = Array.from(new Set([...Object.keys(salesGroup), ...Object.keys(purchasesGroup)]));
+    allKeys.sort((a, b) => compareKeys(a, b, granularity));
+    
+    const labels = allKeys.map(key => formatKeyLabel(key, granularity));
+    const salesData = allKeys.map(key => salesGroup[key] || 0);
+    const purchasesData = allKeys.map(key => purchasesGroup[key] || 0);
+    
+    if (productTrendChart) productTrendChart.destroy();
+    
+    productTrendChart = new Chart(trendCtx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Sales Qty Out',
+            data: salesData,
+            backgroundColor: '#7ed957',
+            borderColor: '#4caf50',
+            borderWidth: 1,
+            borderRadius: 6
+          },
+          {
+            label: 'Purchases Qty In',
+            data: purchasesData,
+            backgroundColor: '#ff8a2a',
+            borderColor: '#ff6a00',
+            borderWidth: 1,
+            borderRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#f5f7f6', font: { family: 'Outfit' } }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#9aa5a0', font: { family: 'Outfit' } }
+          },
+          y: {
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { color: '#9aa5a0', font: { family: 'Outfit' } }
+          }
+        }
+      }
+    });
+  }
+  
+  const qtyCtx = document.getElementById("productQtyShareChart");
+  if (qtyCtx) {
+    const productQuantities = {};
+    state.sales.forEach(s => {
+      productQuantities[s.product] = (productQuantities[s.product] || 0) + (parseFloat(s.quantity) || 0);
+    });
+    
+    const sortedProductsQty = Object.keys(productQuantities).sort((a, b) => productQuantities[b] - productQuantities[a]);
+    const topLabelsQty = sortedProductsQty.slice(0, 5);
+    const topValuesQty = topLabelsQty.map(lbl => productQuantities[lbl]);
+    
+    if (sortedProductsQty.length > 5) {
+      let otherSumQty = 0;
+      sortedProductsQty.slice(5).forEach(lbl => otherSumQty += productQuantities[lbl]);
+      topLabelsQty.push("Others");
+      topValuesQty.push(otherSumQty);
+    }
+    
+    if (productQtyShareChart) productQtyShareChart.destroy();
+    
+    productQtyShareChart = new Chart(qtyCtx, {
+      type: 'doughnut',
+      data: {
+        labels: topLabelsQty,
+        datasets: [{
+          data: topValuesQty,
+          backgroundColor: [
+            '#7ed957',
+            '#4caf50',
+            '#3b82f6',
+            '#ff8a2a',
+            '#a855f7',
+            '#6b7280'
+          ],
+          borderWidth: 1,
+          borderColor: '#121815'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: { color: '#f5f7f6', font: { family: 'Outfit', size: 11 } }
+          }
+        }
+      }
+    });
+  }
 }
 
 // ================= DROPDOWNS POPULATER =================
@@ -1271,6 +1470,18 @@ function populateDropdowns() {
     purProdSel.innerHTML += `<option value="${p.name}">${p.name}</option>`;
     saleProdSel.innerHTML += `<option value="${p.name}">${p.name}</option>`;
   });
+  
+  const trendProductSel = document.getElementById("trend-product-select");
+  if (trendProductSel) {
+    const prevTrendProd = trendProductSel.value;
+    trendProductSel.innerHTML = '<option value="all">All Products</option>';
+    state.products.forEach(p => {
+      trendProductSel.innerHTML += `<option value="${p.name}">${p.name}</option>`;
+    });
+    if (prevTrendProd) {
+      trendProductSel.value = prevTrendProd;
+    }
+  }
   
   state.vendors.forEach(v => {
     purVendorSel.innerHTML += `<option value="${v.name}">${v.name}</option>`;

@@ -173,6 +173,35 @@
               </div>
             </div>
           </div>
+
+          <!-- Product Quantity Volume Charts Section -->
+          <div class="dashboard-charts mt-3">
+            <div class="chart-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px;">
+                <h3 style="margin-bottom: 0;">Product Volume Trend (Quantity)</h3>
+                <div style="display: flex; gap: 8px;">
+                  <select class="filter-select" id="trend-product-select" style="padding: 4px 8px; font-size: 12px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); outline: none; cursor: pointer;">
+                    <option value="all">All Products</option>
+                  </select>
+                  <select class="filter-select" id="trend-time-select" style="padding: 4px 8px; font-size: 12px; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); outline: none; cursor: pointer;">
+                    <option value="day">Day-Wise</option>
+                    <option value="week">Week-Wise</option>
+                    <option value="month" selected>Month-Wise</option>
+                    <option value="year">Year-Wise</option>
+                  </select>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="productTrendChart"></canvas>
+              </div>
+            </div>
+            <div class="chart-card">
+              <h3>Top Products by Quantity Sold</h3>
+              <div class="chart-container">
+                <canvas id="productQtyShareChart"></canvas>
+              </div>
+            </div>
+          </div>
           
           <!-- Tables Section -->
           <div class="dashboard-tables-grid">
