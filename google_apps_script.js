@@ -138,13 +138,13 @@ function doPost(e) {
             if (lastRow > 1) {
               sheet.deleteRows(2, lastRow - 1);
             }
-            var headers = HEADERS[targetSheet];
+            var sheetHeaders = sheet.getDataRange().getValues()[0];
             var rowsData = payload[targetSheet];
             for (var i = 0; i < rowsData.length; i++) {
               var rowData = rowsData[i];
               var rowValues = [];
-              for (var j = 0; j < headers.length; j++) {
-                rowValues.push(rowData[headers[j]] || "");
+              for (var j = 0; j < sheetHeaders.length; j++) {
+                rowValues.push(rowData[sheetHeaders[j]] || "");
               }
               sheet.appendRow(rowValues);
             }
@@ -162,14 +162,19 @@ function doPost(e) {
         
         var targetSheet = ss.getSheetByName(type === "sales" ? "Sales" : "Purchases");
         var rows = targetSheet.getDataRange().getValues();
-        var headers = HEADERS[type === "sales" ? "Sales" : "Purchases"];
-        var colIndex = headers.indexOf("payment_status") + 1; // 1-indexed column
+        var sheetHeaders = rows[0];
         
-        for (var i = 1; i < rows.length; i++) {
-          if (rows[i][0] === id) {
-            targetSheet.getRange(i + 1, colIndex).setValue(status);
+        var idColIndex = sheetHeaders.indexOf("id");
+        var statusColIndex = sheetHeaders.indexOf("payment_status");
+        
+        if (idColIndex !== -1 && statusColIndex !== -1) {
+          for (var i = 1; i < rows.length; i++) {
+            if (rows[i][idColIndex] === id) {
+              targetSheet.getRange(i + 1, statusColIndex + 1).setValue(status);
+            }
           }
         }
+        
         return ContentService.createTextOutput(JSON.stringify({ status: "success", message: "Payment status updated" }))
           .setMimeType(ContentService.MimeType.JSON);
       }
@@ -178,18 +183,19 @@ function doPost(e) {
     }
     
     var sheet = ss.getSheetByName(sheetName);
-    var headers = HEADERS[sheetName];
+    var rows = sheet.getDataRange().getValues();
+    var sheetHeaders = rows[0];
+    var idColIndex = sheetHeaders.indexOf("id");
     
     var items = Array.isArray(payload) ? payload : [payload];
     
     if (sheetName === "Purchases" || sheetName === "Sales") {
       // For multi-item transactions, clean existing entries by ID first, then append all new entries
-      if (items.length > 0 && items[0].id) {
+      if (items.length > 0 && items[0].id && idColIndex !== -1) {
         var targetId = items[0].id;
-        var rows = sheet.getDataRange().getValues();
         // Go backwards to preserve index ordering while deleting rows
         for (var i = rows.length - 1; i >= 1; i--) {
-          if (rows[i][0] === targetId) {
+          if (rows[i][idColIndex] === targetId) {
             sheet.deleteRow(i + 1);
           }
         }
@@ -198,8 +204,8 @@ function doPost(e) {
       for (var k = 0; k < items.length; k++) {
         var item = items[k];
         var rowValues = [];
-        for (var i = 0; i < headers.length; i++) {
-          var val = item[headers[i]];
+        for (var i = 0; i < sheetHeaders.length; i++) {
+          var val = item[sheetHeaders[i]];
           if (val === undefined || val === null) {
             val = "";
           }
@@ -209,12 +215,11 @@ function doPost(e) {
       }
     } else {
       // For other entities (Products, Vendors, Customers, Payments), do standard in-place update or append
-      var rows = sheet.getDataRange().getValues();
       var existingRowIdx = -1;
       var singlePayload = items[0];
-      if (singlePayload.id) {
+      if (singlePayload.id && idColIndex !== -1) {
         for (var i = 1; i < rows.length; i++) {
-          if (rows[i][0] === singlePayload.id) {
+          if (rows[i][idColIndex] === singlePayload.id) {
             existingRowIdx = i + 1;
             break;
           }
@@ -222,8 +227,8 @@ function doPost(e) {
       }
       
       var rowValues = [];
-      for (var i = 0; i < headers.length; i++) {
-        var val = singlePayload[headers[i]];
+      for (var i = 0; i < sheetHeaders.length; i++) {
+        var val = singlePayload[sheetHeaders[i]];
         if (val === undefined || val === null) {
           val = "";
         }
@@ -231,8 +236,10 @@ function doPost(e) {
       }
       
       if (existingRowIdx !== -1) {
-        sheet.getRange(existingRowIdx, 1, 1, headers.length).setValues([rowValues]);
+        // Update existing row
+        sheet.getRange(existingRowIdx, 1, 1, sheetHeaders.length).setValues([rowValues]);
       } else {
+        // Append new row
         sheet.appendRow(rowValues);
       }
     }
