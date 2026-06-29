@@ -950,6 +950,34 @@ function renderVendorLedger() {
   document.getElementById("vend-ledger-current-balance").textContent = `₹${runningBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
 }
 
+function getGlDateRange(period) {
+  const now = new Date();
+  let start, end;
+  if (period === "daily") {
+    start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+  } else if (period === "weekly") {
+    const day = now.getDay();
+    start = new Date(now);
+    start.setDate(now.getDate() - day);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    end.setHours(23, 59, 59, 999);
+  } else if (period === "monthly") {
+    start = new Date(now.getFullYear(), now.getMonth(), 1);
+    end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  } else {
+    return null; // "total" — no date filtering
+  }
+  return { start, end };
+}
+
+function inGlPeriod(dateStr, start, end) {
+  const d = new Date(dateStr);
+  return !isNaN(d.getTime()) && d >= start && d <= end;
+}
+
 function renderGlLedger() {
   const account = document.getElementById("gl-ledger-select").value;
   const tbody = document.getElementById("gl-ledger-tbody");
@@ -1025,6 +1053,13 @@ function renderGlLedger() {
     
   }
   
+  const periodEl = document.getElementById("gl-period-filter");
+  const period = periodEl ? periodEl.value : "monthly";
+  const glRange = getGlDateRange(period);
+  if (glRange) {
+    ledgerEntries = ledgerEntries.filter(e => inGlPeriod(e.date, glRange.start, glRange.end));
+  }
+
   ledgerEntries.sort((a, b) => new Date(a.date) - new Date(b.date));
   runningBalance = 0;
   
@@ -2133,6 +2168,7 @@ function setupFilterHandlers() {
   document.getElementById("cust-ledger-select").addEventListener("change", renderCustomerLedger);
   document.getElementById("vend-ledger-select").addEventListener("change", renderVendorLedger);
   document.getElementById("gl-ledger-select").addEventListener("change", renderGlLedger);
+  document.getElementById("gl-period-filter").addEventListener("change", renderGlLedger);
   
   document.getElementById("view-all-transactions").addEventListener("click", () => {
     switchTab("sales");
