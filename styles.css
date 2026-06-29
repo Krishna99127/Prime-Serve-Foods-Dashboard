@@ -52,9 +52,9 @@ body {
    Tune the look with one place: bump --watermark-opacity up (e.g. 0.06-0.08)
    for more presence, or down toward 0.02 for even more restraint. */
 :root {
-  --watermark-opacity: 0.10;   /* wash over content; raise toward 0.13 for more, 0.06 for less */
-  --watermark-blur: 6px;
-  --watermark-size: min(85vw, 820px);
+  --watermark-opacity: 0.11;   /* wash over content; raise toward 0.14 for more, 0.07 for less */
+  --watermark-blur: 3px;       /* lower = crisper shape, higher = softer glow */
+  --watermark-size: min(94vw, 940px);
 }
 
 body::before {
