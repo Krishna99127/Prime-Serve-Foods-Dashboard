@@ -454,15 +454,15 @@ function renderCustomersTable() {
   list.forEach(c => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${c.id}</td>
-      <td class="font-weight-bold">${c.name}</td>
-      <td>${c.gstin || '-'}</td>
-      <td>${c.state || 'Telangana'}</td>
-      <td>${c.phone}</td>
-      <td>${c.email}</td>
-      <td>${c.address}</td>
-      <td class="${c.outstanding > 0 ? 'color-green font-weight-bold' : ''}">₹${c.outstanding.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-      <td>
+      <td data-label="ID">${c.id}</td>
+      <td data-label="Customer" class="font-weight-bold">${c.name}</td>
+      <td data-label="GSTIN">${c.gstin || '-'}</td>
+      <td data-label="State">${c.state || 'Telangana'}</td>
+      <td data-label="Phone">${c.phone}</td>
+      <td data-label="Email">${c.email}</td>
+      <td data-label="Location">${c.address}</td>
+      <td data-label="Outstanding" class="${c.outstanding > 0 ? 'color-green font-weight-bold' : ''}">₹${c.outstanding.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+      <td class="cell-actions">
         <div style="display: flex; gap: 6px;">
           <button class="btn btn-sm btn-primary" onclick="openPaymentModal('Customer Receipt', '${c.name}')">Receipt</button>
           <button class="btn btn-sm btn-outline" onclick="editCustomer('${c.id}')">Edit</button>

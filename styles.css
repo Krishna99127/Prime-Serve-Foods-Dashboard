@@ -1056,3 +1056,162 @@ tbody tr:last-child td {
   border: 1px solid rgba(198, 40, 40, 0.3);
 }
 
+
+/* ===========================================================================
+   Mobile card layout for the Customers table.
+   The Customers table is wide (9 columns, min-width forces a horizontal
+   scroll), so on phones the customer name and balance sit off-screen behind a
+   scroll. Below 768px each row collapses into a compact, left-anchored card:
+   a bold "name + due" headline, a short "id · phone" meta line, then the
+   action buttons. Secondary fields are hidden but stay editable via the form.
+   Scoped to .table-card.mobile-cards / #tab-customers so other tables keep
+   their scroll layout untouched.
+   =========================================================================== */
+@media (max-width: 768px) {
+  .table-card.mobile-cards,
+  .table-card.mobile-cards .table-responsive { overflow: visible; }
+
+  /* Drop the forced min-width and collapse the grid into a stack of blocks. */
+  .table-card.mobile-cards table { min-width: 0; }
+  .table-card.mobile-cards thead { display: none; }
+  .table-card.mobile-cards tbody,
+  .table-card.mobile-cards tr,
+  .table-card.mobile-cards td { display: block; width: 100%; }
+
+  /* Undo the frozen/sticky first column from the scroll layout. */
+  .table-card.mobile-cards td:first-child,
+  .table-card.mobile-cards th:first-child {
+    position: static;
+    border-right: none;
+    background-color: transparent !important;
+  }
+
+  /* Each data row becomes a card. */
+  .table-card.mobile-cards tbody tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 4px 14px;
+    margin: 0 12px 12px;
+    box-shadow: var(--shadow-sm);
+  }
+  .table-card.mobile-cards tbody tr:first-child { margin-top: 12px; }
+
+  /* Each cell is a "Label : value" line. */
+  .table-card.mobile-cards tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 9px 0;
+    text-align: right;
+    white-space: normal;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .table-card.mobile-cards tbody td:last-child { border-bottom: none; }
+  .table-card.mobile-cards tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* Actions: a full-width wrapped row of tappable buttons, no label. */
+  .table-card.mobile-cards tbody td.cell-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
+    padding-top: 12px;
+    text-align: left;
+  }
+  .table-card.mobile-cards tbody td.cell-actions::before { content: none; }
+  .table-card.mobile-cards tbody td.cell-actions > div { display: contents; }
+  .table-card.mobile-cards tbody td.cell-actions .btn { min-height: 38px; }
+}
+
+/* Compact mobile card — Customers page: condense each row to a left-anchored
+   "name + due" headline, an "id · phone" meta line, then the actions. */
+@media (max-width: 768px) {
+  #tab-customers .table-card.mobile-cards tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 10px;
+    row-gap: 3px;
+    padding: 12px 14px;
+  }
+  #tab-customers .table-card.mobile-cards tbody td {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    width: auto;
+    padding: 0;
+    border: none;
+    text-align: left;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  /* Hide low-priority fields on mobile (still on the Edit form). */
+  #tab-customers .table-card.mobile-cards tbody td[data-label="GSTIN"],
+  #tab-customers .table-card.mobile-cards tbody td[data-label="State"],
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Email"],
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Location"] { display: none; }
+
+  /* Line 1 (left) — customer name headline. */
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Customer"] {
+    order: 1;
+    flex: 1 1 auto;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Customer"]::before { content: none; }
+
+  /* Line 1 (right) — outstanding balance, pushed to the end of the headline. */
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Outstanding"] {
+    order: 2;
+    margin-left: auto;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Outstanding"]::before {
+    content: "Due";
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text-muted);
+  }
+
+  /* Line 2 — compact meta: id then phone, no labels. */
+  #tab-customers .table-card.mobile-cards tbody td[data-label="ID"] {
+    order: 3;
+    flex: 0 0 auto;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Phone"] {
+    order: 4;
+    flex: 0 0 auto;
+    font-size: 12px;
+  }
+  #tab-customers .table-card.mobile-cards tbody td[data-label="ID"]::before,
+  #tab-customers .table-card.mobile-cards tbody td[data-label="Phone"]::before { content: none; }
+
+  /* Line 3 — actions, full width below the meta line. */
+  #tab-customers .table-card.mobile-cards tbody td.cell-actions {
+    order: 5;
+    flex: 0 0 100%;
+    margin-top: 6px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-color);
+    gap: 6px;
+  }
+  #tab-customers .table-card.mobile-cards tbody td.cell-actions::before { content: none; }
+}
