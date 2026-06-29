@@ -967,6 +967,16 @@ function getGlDateRange(period) {
   } else if (period === "monthly") {
     start = new Date(now.getFullYear(), now.getMonth(), 1);
     end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+  } else if (period === "custom") {
+    const fromEl = document.getElementById("gl-custom-from");
+    const toEl = document.getElementById("gl-custom-to");
+    const fromVal = fromEl ? fromEl.value : "";
+    const toVal = toEl ? toEl.value : "";
+    if (!fromVal && !toVal) {
+      return null; // no custom dates chosen yet — show everything
+    }
+    start = fromVal ? new Date(fromVal + "T00:00:00") : new Date(0);
+    end = toVal ? new Date(toVal + "T23:59:59.999") : new Date(8640000000000000);
   } else {
     return null; // "total" — no date filtering
   }
@@ -2168,7 +2178,15 @@ function setupFilterHandlers() {
   document.getElementById("cust-ledger-select").addEventListener("change", renderCustomerLedger);
   document.getElementById("vend-ledger-select").addEventListener("change", renderVendorLedger);
   document.getElementById("gl-ledger-select").addEventListener("change", renderGlLedger);
-  document.getElementById("gl-period-filter").addEventListener("change", renderGlLedger);
+  document.getElementById("gl-period-filter").addEventListener("change", function () {
+    const customGroup = document.getElementById("gl-custom-range-group");
+    if (customGroup) {
+      customGroup.style.display = this.value === "custom" ? "" : "none";
+    }
+    renderGlLedger();
+  });
+  document.getElementById("gl-custom-from").addEventListener("change", renderGlLedger);
+  document.getElementById("gl-custom-to").addEventListener("change", renderGlLedger);
   
   document.getElementById("view-all-transactions").addEventListener("click", () => {
     switchTab("sales");

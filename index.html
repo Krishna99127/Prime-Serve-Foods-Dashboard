@@ -664,7 +664,16 @@
                 <option value="weekly">Weekly</option>
                 <option value="monthly" selected>Monthly</option>
                 <option value="total">Total</option>
+                <option value="custom">Custom Date Range</option>
               </select>
+            </div>
+            <div class="form-group ledger-select-group" id="gl-custom-range-group" style="display:none;">
+              <label>Custom Range</label>
+              <div class="date-range-filter">
+                <input type="date" class="filter-date" id="gl-custom-from" placeholder="From Date">
+                <span>to</span>
+                <input type="date" class="filter-date" id="gl-custom-to" placeholder="To Date">
+              </div>
             </div>
             <div class="ledger-summary-metrics">
               <div class="metric-box">
