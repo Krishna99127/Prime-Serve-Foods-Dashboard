@@ -52,8 +52,8 @@ body {
    Tune the look with one place: bump --watermark-opacity up (e.g. 0.06-0.08)
    for more presence, or down toward 0.02 for even more restraint. */
 :root {
-  --watermark-opacity: 0.04;   /* barely-there; raise for more visible logo */
-  --watermark-blur: 7px;
+  --watermark-opacity: 0.09;   /* visible but subtle; raise toward 0.14 for more, 0.05 for less */
+  --watermark-blur: 6px;
   --watermark-size: min(62vw, 600px);
 }
 
@@ -68,7 +68,7 @@ body::before {
   background-position: center center;
   background-size: var(--watermark-size);
   opacity: var(--watermark-opacity);
-  filter: blur(var(--watermark-blur));
+  filter: blur(var(--watermark-blur)) brightness(1.6);  /* lift the mark off the dark theme */
 }
 
 @media (max-width: 640px) {
