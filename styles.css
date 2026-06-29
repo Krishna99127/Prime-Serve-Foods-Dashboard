@@ -47,6 +47,34 @@ body {
   line-height: 1.5;
 }
 
+/* ===== Background Logo Watermark =====
+   Subtle, blurred brand mark behind every page (and the installable PWA).
+   Tune the look with one place: bump --watermark-opacity up (e.g. 0.06-0.08)
+   for more presence, or down toward 0.02 for even more restraint. */
+:root {
+  --watermark-opacity: 0.04;   /* barely-there; raise for more visible logo */
+  --watermark-blur: 7px;
+  --watermark-size: min(62vw, 600px);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;                 /* sits above the page background, below all content */
+  pointer-events: none;        /* never blocks clicks/scroll */
+  background-image: url("logo.png");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: var(--watermark-size);
+  opacity: var(--watermark-opacity);
+  filter: blur(var(--watermark-blur));
+}
+
+@media (max-width: 640px) {
+  :root { --watermark-size: 78vw; }
+}
+
 .app-container {
   display: flex;
   min-height: 100vh;
